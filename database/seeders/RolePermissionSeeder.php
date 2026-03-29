@@ -3,9 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
-use App\Models\User;
+use Spatie\Permission\Models\Role;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -14,37 +13,26 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        // Reset cached roles and permissions
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Define the 4 core roles
         $roles = [
-            'super_admin' => 'Super Administrator - Full system access',
-            'manager' => 'Manager - Operational full access, publish content, hire candidates',
-            'content_editor' => 'Content Editor - Create drafts for blog, gallery, reviews',
-            'hr' => 'HR Specialist - Recruitment up to shortlist, employee management',
+            'super_admin',
+            'admin',
+            'manager_cabang',
+            'peninjau',
         ];
 
-        // Create roles
-        foreach ($roles as $name => $description) {
+        foreach ($roles as $name) {
             Role::firstOrCreate(['name' => $name], ['guard_name' => 'web']);
         }
 
-        // Get all permissions from Shield
         $allPermissions = Permission::all()->pluck('name')->toArray();
 
-        // ============================
-        // SUPER ADMIN - ALL PERMISSIONS
-        // ============================
         $superAdmin = Role::findByName('super_admin');
         $superAdmin->syncPermissions($allPermissions);
 
-        // ============================
-        // MANAGER ROLE - Operational Full Access
-        // ============================
-        $manager = Role::findByName('manager');
-        $managerPermissions = [
-            // Blog Posts - Full CRUD + Publish
+        $admin = Role::findByName('admin');
+        $adminPermissions = [
             'view_any_blog::post',
             'view_blog::post',
             'create_blog::post',
@@ -56,9 +44,8 @@ class RolePermissionSeeder extends Seeder
             'force_delete_blog::post',
             'force_delete_any_blog::post',
             'replicate_blog::post',
-            'publish_blog_post', // Custom permission for publishing
+            'publish_blog_post',
 
-            // Reviews - Full CRUD + Approve/Feature
             'view_any_review',
             'view_review',
             'create_review',
@@ -70,10 +57,9 @@ class RolePermissionSeeder extends Seeder
             'force_delete_review',
             'force_delete_any_review',
             'replicate_review',
-            'approve_review', // Custom permission
-            'feature_review', // Custom permission
+            'approve_review',
+            'feature_review',
 
-            // Gallery Images - Full CRUD
             'view_any_gallery::image',
             'view_gallery::image',
             'create_gallery::image',
@@ -86,7 +72,6 @@ class RolePermissionSeeder extends Seeder
             'force_delete_any_gallery::image',
             'replicate_gallery::image',
 
-            // Job Openings - Full CRUD
             'view_any_job::opening',
             'view_job::opening',
             'create_job::opening',
@@ -99,10 +84,8 @@ class RolePermissionSeeder extends Seeder
             'force_delete_any_job::opening',
             'replicate_job::opening',
 
-            // Job Applications - Full CRUD + Hire/Reject
             'view_any_job::application',
             'view_job::application',
-            'create_job::application',
             'update_job::application',
             'delete_job::application',
             'delete_any_job::application',
@@ -111,10 +94,9 @@ class RolePermissionSeeder extends Seeder
             'force_delete_job::application',
             'force_delete_any_job::application',
             'replicate_job::application',
-            'hire_candidate', // Custom permission - Manager decides hire/reject
-            'reject_candidate', // Custom permission
+            'hire_candidate',
+            'reject_candidate',
 
-            // Employees - Full CRUD
             'view_any_employee',
             'view_employee',
             'create_employee',
@@ -127,7 +109,6 @@ class RolePermissionSeeder extends Seeder
             'force_delete_any_employee',
             'replicate_employee',
 
-            // Menu Categories - Full CRUD
             'view_any_menu::category',
             'view_menu::category',
             'create_menu::category',
@@ -139,8 +120,6 @@ class RolePermissionSeeder extends Seeder
             'force_delete_menu::category',
             'force_delete_any_menu::category',
             'replicate_menu::category',
-
-            // Menu Items - Full CRUD
             'view_any_menu::item',
             'view_menu::item',
             'create_menu::item',
@@ -153,7 +132,6 @@ class RolePermissionSeeder extends Seeder
             'force_delete_any_menu::item',
             'replicate_menu::item',
 
-            // Newsletter - Full CRUD + Broadcast
             'view_any_newsletter::subscription',
             'view_newsletter::subscription',
             'create_newsletter::subscription',
@@ -165,9 +143,8 @@ class RolePermissionSeeder extends Seeder
             'force_delete_newsletter::subscription',
             'force_delete_any_newsletter::subscription',
             'replicate_newsletter::subscription',
-            'broadcast_newsletter', // Custom permission
+            'broadcast_newsletter',
 
-            // Branches - Full CRUD
             'view_any_branch',
             'view_branch',
             'create_branch',
@@ -180,57 +157,10 @@ class RolePermissionSeeder extends Seeder
             'force_delete_any_branch',
             'replicate_branch',
         ];
-        $manager->syncPermissions(array_filter($managerPermissions, fn($p) => in_array($p, $allPermissions)));
+        $admin->syncPermissions(array_values(array_intersect($adminPermissions, $allPermissions)));
 
-        // ============================
-        // CONTENT EDITOR ROLE - Create Drafts
-        // ============================
-        $contentEditor = Role::findByName('content_editor');
-        $editorPermissions = [
-            // Blog Posts - Create drafts, update own posts, view all
-            'view_any_blog::post',
-            'view_blog::post',
-            'create_blog::post',
-            'update_blog::post', // Can edit their own drafts
-            'delete_blog::post', // Can delete their own drafts
-            // NO publish_blog_post - Manager only
-
-            // Gallery Images - Full CRUD
-            'view_any_gallery::image',
-            'view_gallery::image',
-            'create_gallery::image',
-            'update_gallery::image',
-            'delete_gallery::image',
-
-            // Reviews - View and moderate (but not feature)
-            'view_any_review',
-            'view_review',
-            'update_review',
-            'approve_review', // Can approve reviews
-            // NO feature_review - Manager only
-
-            // Menu - View only (for content planning)
-            'view_any_menu::category',
-            'view_menu::category',
-            'view_any_menu::item',
-            'view_menu::item',
-
-            // Newsletter - View only
-            'view_any_newsletter::subscription',
-            'view_newsletter::subscription',
-
-            // Branches - View only
-            'view_any_branch',
-            'view_branch',
-        ];
-        $contentEditor->syncPermissions(array_filter($editorPermissions, fn($p) => in_array($p, $allPermissions)));
-
-        // ============================
-        // HR ROLE - Recruitment + Employee Management
-        // ============================
-        $hr = Role::findByName('hr');
-        $hrPermissions = [
-            // Job Openings - Full CRUD
+        $managerCabang = Role::findByName('manager_cabang');
+        $managerCabangPermissions = [
             'view_any_job::opening',
             'view_job::opening',
             'create_job::opening',
@@ -238,14 +168,6 @@ class RolePermissionSeeder extends Seeder
             'delete_job::opening',
             'restore_job::opening',
 
-            // Job Applications - View and process up to shortlist
-            'view_any_job::application',
-            'view_job::application',
-            'update_job::application', // Can change status: pending → reviewing → shortlisted
-            'delete_job::application',
-            // NO hire_candidate or reject_candidate - Manager only
-
-            // Employees - Full CRUD
             'view_any_employee',
             'view_employee',
             'create_employee',
@@ -253,67 +175,30 @@ class RolePermissionSeeder extends Seeder
             'delete_employee',
             'restore_employee',
 
-            // Branches - View only (need to know which branch to assign)
-            'view_any_branch',
-            'view_branch',
-
-            // Menu - View only
             'view_any_menu::category',
             'view_menu::category',
+            'create_menu::category',
+            'update_menu::category',
+            'delete_menu::category',
             'view_any_menu::item',
             'view_menu::item',
+            'create_menu::item',
+            'update_menu::item',
+            'delete_menu::item',
+
+            'view_any_branch',
+            'view_branch',
         ];
-        $hr->syncPermissions(array_filter($hrPermissions, fn($p) => in_array($p, $allPermissions)));
+        $managerCabang->syncPermissions(array_values(array_intersect($managerCabangPermissions, $allPermissions)));
 
-        // ============================
-        // Assign Super Admin to User ID 1
-        // ============================
-        $adminUser = User::find(1);
-        if ($adminUser) {
-            $adminUser->assignRole('super_admin');
-        }
-
-        // ============================
-        // Create Sample Users for Each Role
-        // ============================
-        $sampleUsers = [
-            [
-                'name' => 'Manager User',
-                'email' => 'manager@bluedoor.com',
-                'password' => bcrypt('password'),
-                'role' => 'manager',
-            ],
-            [
-                'name' => 'Content Editor',
-                'email' => 'editor@bluedoor.com',
-                'password' => bcrypt('password'),
-                'role' => 'content_editor',
-            ],
-            [
-                'name' => 'HR Specialist',
-                'email' => 'hr@bluedoor.com',
-                'password' => bcrypt('password'),
-                'role' => 'hr',
-            ],
+        $peninjau = Role::findByName('peninjau');
+        $peninjauPermissions = [
+            'view_any_job::application',
+            'view_job::application',
+            'update_job::application',
         ];
+        $peninjau->syncPermissions(array_values(array_intersect($peninjauPermissions, $allPermissions)));
 
-        foreach ($sampleUsers as $userData) {
-            $role = $userData['role'];
-            unset($userData['role']);
-
-            $user = User::firstOrCreate(
-                ['email' => $userData['email']],
-                $userData
-            );
-            $user->assignRole($role);
-        }
-
-        $this->command->info('✅ Roles and permissions seeded successfully!');
-        $this->command->info('📝 4 roles created: super_admin, manager, content_editor, hr');
-        $this->command->info('👥 Sample users created with credentials (password: password):');
-        $this->command->info('   - admin@admin.com (super_admin)');
-        $this->command->info('   - manager@bluedoor.com (manager)');
-        $this->command->info('   - editor@bluedoor.com (content_editor)');
-        $this->command->info('   - hr@bluedoor.com (hr)');
+        $this->command->info('Roles and permissions seeded successfully.');
     }
 }

@@ -23,6 +23,11 @@ Route::get('/blog', [BlogController::class, 'index'])->name('blog');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
 // Form submission routes
-Route::post('/careers/apply', [CareersController::class, 'apply'])->name('careers.apply');
-Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
-Route::post('/reviews/submit', [ReviewController::class, 'store'])->name('reviews.submit');
+Route::get('/newsletter/unsubscribe', [NewsletterController::class, 'showUnsubscribeForm'])->name('newsletter.unsubscribe.form');
+
+Route::middleware('throttle:10,1')->group(function () {
+    Route::post('/careers/apply', [CareersController::class, 'apply'])->name('careers.apply');
+    Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('newsletter.subscribe');
+    Route::post('/newsletter/unsubscribe', [NewsletterController::class, 'unsubscribe'])->name('newsletter.unsubscribe');
+    Route::post('/reviews/submit', [ReviewController::class, 'store'])->name('reviews.submit');
+});

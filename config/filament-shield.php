@@ -230,42 +230,18 @@ return [
 
     'custom_permissions' => [
         // Blog workflow permissions
-        'publish_blog_post' => [
-            'name' => 'publish_blog_post',
-            'label' => 'Publish Blog Post',
-            'description' => 'Allow publishing blog posts from draft to published status',
-        ],
+        'publish_blog_post' => 'Publish Blog Post',
 
         // Review moderation permissions
-        'approve_review' => [
-            'name' => 'approve_review',
-            'label' => 'Approve Review',
-            'description' => 'Allow approving customer reviews for public display',
-        ],
-        'feature_review' => [
-            'name' => 'feature_review',
-            'label' => 'Feature Review',
-            'description' => 'Allow marking reviews as featured on homepage',
-        ],
+        'approve_review' => 'Approve Review',
+        'feature_review' => 'Feature Review',
 
         // Recruitment workflow permissions
-        'hire_candidate' => [
-            'name' => 'hire_candidate',
-            'label' => 'Hire Candidate',
-            'description' => 'Allow changing job application status to hired (Manager only)',
-        ],
-        'reject_candidate' => [
-            'name' => 'reject_candidate',
-            'label' => 'Reject Candidate',
-            'description' => 'Allow changing job application status to rejected (Manager only)',
-        ],
+        'hire_candidate' => 'Hire Candidate',
+        'reject_candidate' => 'Reject Candidate',
 
         // Newsletter permission
-        'broadcast_newsletter' => [
-            'name' => 'broadcast_newsletter',
-            'label' => 'Broadcast Newsletter',
-            'description' => 'Allow sending newsletter broadcasts with PDF attachments',
-        ],
+        'broadcast_newsletter' => 'Broadcast Newsletter',
     ],
 
     /*

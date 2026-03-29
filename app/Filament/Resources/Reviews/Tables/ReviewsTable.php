@@ -11,7 +11,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Gate;
 
 class ReviewsTable
 {
@@ -79,18 +79,24 @@ class ReviewsTable
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->action(function ($record) {
+                        abort_unless(auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('approve', $record), 403);
+
                         $record->update([
                             'is_approved' => true,
                             'approved_at' => now(),
                             'approved_by' => auth()->guard()->id(),
                         ]);
                     })
-                    ->visible(fn ($record) => !$record->is_approved)
+                    ->visible(fn ($record) => !$record->is_approved && auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('approve', $record))
                     ->requiresConfirmation(),
                 Action::make('feature')
                     ->icon('heroicon-o-star')
                     ->color('warning')
-                    ->action(fn ($record) => $record->update(['is_featured' => !$record->is_featured]))
+                    ->action(function ($record) {
+                        abort_unless(auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('feature', $record), 403);
+                        $record->update(['is_featured' => !$record->is_featured]);
+                    })
+                    ->visible(fn ($record) => $record->is_approved && auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('feature', $record))
                     ->label(fn ($record) => $record->is_featured ? 'Unfeature' : 'Feature'),
                 EditAction::make(),
             ])

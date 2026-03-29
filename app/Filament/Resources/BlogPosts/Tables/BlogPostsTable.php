@@ -10,6 +10,7 @@ use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Gate;
 
 class BlogPostsTable
 {
@@ -79,18 +80,23 @@ class BlogPostsTable
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->action(function ($record) {
+                        abort_unless(auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('publish', $record), 403);
+
                         $record->update([
                             'status' => 'published',
                             'published_at' => $record->published_at ?? now(),
                         ]);
                     })
-                    ->visible(fn ($record) => $record->status === 'draft')
+                    ->visible(fn ($record) => $record->status === 'draft' && auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('publish', $record))
                     ->requiresConfirmation(),
                 Action::make('unpublish')
                     ->icon('heroicon-o-x-circle')
                     ->color('warning')
-                    ->action(fn ($record) => $record->update(['status' => 'draft']))
-                    ->visible(fn ($record) => $record->status === 'published')
+                    ->action(function ($record) {
+                        abort_unless(auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('unpublish', $record), 403);
+                        $record->update(['status' => 'draft']);
+                    })
+                    ->visible(fn ($record) => $record->status === 'published' && auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('unpublish', $record))
                     ->requiresConfirmation(),
                 EditAction::make(),
             ])

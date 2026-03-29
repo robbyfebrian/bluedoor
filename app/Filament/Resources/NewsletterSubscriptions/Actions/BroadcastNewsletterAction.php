@@ -9,6 +9,7 @@ use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Gate;
 
 class BroadcastNewsletterAction
 {
@@ -29,6 +30,8 @@ class BroadcastNewsletterAction
                     ->columnSpanFull(),
             ])
             ->action(function (array $data) {
+                abort_unless(auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('broadcast', NewsletterSubscription::class), 403);
+
                 $subscribers = NewsletterSubscription::subscribed()->verified()->get();
 
                 if ($subscribers->isEmpty()) {
@@ -76,6 +79,7 @@ class BroadcastNewsletterAction
                     ->title('Newsletter Sent!')
                     ->body("Successfully sent newsletter to {$count} subscriber(s).")
                     ->send();
-            });
+            })
+            ->visible(fn (): bool => auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('broadcast', NewsletterSubscription::class));
     }
 }

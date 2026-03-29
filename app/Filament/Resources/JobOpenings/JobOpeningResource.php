@@ -21,7 +21,13 @@ class JobOpeningResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBriefcase;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Recruitment';
+    protected static ?string $navigationLabel = 'Lowongan Kerja';
+
+    protected static ?string $modelLabel = 'Lowongan Kerja';
+
+    protected static ?string $pluralModelLabel = 'Lowongan Kerja';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Rekrutmen';
 
     protected static ?int $navigationSort = 1;
 

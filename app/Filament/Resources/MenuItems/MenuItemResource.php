@@ -21,9 +21,15 @@ class MenuItemResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCake;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Menu Management';
+    protected static ?string $navigationLabel = 'Item Menu';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?string $modelLabel = 'Item Menu';
+
+    protected static ?string $pluralModelLabel = 'Item Menu';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Operasional Cabang';
+
+    protected static ?int $navigationSort = 4;
 
     public static function form(Schema $schema): Schema
     {

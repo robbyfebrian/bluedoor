@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
 import Lenis from 'lenis';
+import { useEffect } from 'react';
 
 export function useLenis() {
   useEffect(() => {
@@ -10,7 +10,6 @@ export function useLenis() {
       gestureOrientation: 'vertical',
       smoothWheel: true,
       wheelMultiplier: 1,
-      smoothTouch: false,
       touchMultiplier: 2,
       infinite: false,
     });

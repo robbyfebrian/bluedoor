@@ -55,6 +55,7 @@
             <p>123 Coffee Street, Brewtown | (555) 123-4567</p>
             <p class="unsubscribe">
                 You're receiving this because you subscribed to our newsletter.
+                <a href="{{ url('/newsletter/unsubscribe?email=' . urlencode($subscriber->email)) }}" style="color: #fcd34d; text-decoration: underline;">Unsubscribe</a>
             </p>
         </div>
     </div>

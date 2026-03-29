@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\JobApplications\Schemas;
 
+use App\Enums\JobApplicationStatus;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -50,15 +51,11 @@ class JobApplicationForm
                 Section::make('Admin Review')
                     ->schema([
                         Select::make('status')
-                            ->options([
-                                'pending' => 'Pending',
-                                'reviewing' => 'Reviewing',
-                                'shortlisted' => 'Shortlisted',
-                                'rejected' => 'Rejected',
-                                'hired' => 'Hired',
-                            ])
+                            ->options(JobApplicationStatus::options())
                             ->required()
-                            ->default('pending'),
+                            ->default(JobApplicationStatus::Pending->value)
+                            ->disabledOn('edit')
+                            ->helperText('Status berubah melalui workflow actions (Review, Shortlist, Hire, Reject).'),
                         Textarea::make('admin_notes')
                             ->rows(4)
                             ->columnSpanFull(),

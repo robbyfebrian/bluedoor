@@ -21,11 +21,13 @@ class ReviewResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedStar;
 
-    protected static ?string $navigationLabel = 'Customer Reviews';
+    protected static ?string $navigationLabel = 'Ulasan Pelanggan';
 
-    protected static ?string $modelLabel = 'Review';
+    protected static ?string $modelLabel = 'Ulasan';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Content';
+    protected static ?string $pluralModelLabel = 'Ulasan';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Konten & Reputasi';
 
     protected static ?int $navigationSort = 1;
 

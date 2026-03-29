@@ -1,6 +1,9 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler, useState } from 'react';
+import { Head, useForm, usePage } from '@inertiajs/react';
+import type { FormEventHandler } from 'react';
+import { useState } from 'react';
 import { useLenis } from '@/hooks/useLenis';
+import type { SharedData } from '@/types';
+import AppLayout from '@/layouts/AppLayout';
 
 interface JobOpening {
     id: number;
@@ -19,8 +22,8 @@ interface CareersProps {
 
 export default function Careers({ jobs }: CareersProps) {
     useLenis(); // Enable smooth scrolling
+    const { flash } = usePage<SharedData>().props;
 
-    const [selectedJob, setSelectedJob] = useState<number | null>(null);
     const [showApplicationForm, setShowApplicationForm] = useState(false);
 
     const { data, setData, post, processing, errors, reset } = useForm({
@@ -33,61 +36,56 @@ export default function Careers({ jobs }: CareersProps) {
     });
 
     const handleApply = (jobId: number) => {
-        setSelectedJob(jobId);
         setData('job_opening_id', jobId.toString());
         setShowApplicationForm(true);
     };
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
-        post(route('careers.apply'), {
+        post('/careers/apply', {
+            preserveScroll: true,
             onSuccess: () => {
                 reset();
                 setShowApplicationForm(false);
-                alert('Application submitted successfully!');
             },
         });
     };
 
     return (
-        <>
-            <Head title="Careers - Blue Door Coffee" />
+        <AppLayout>
+            <Head title="Careers " />
 
-            <div className="min-h-screen bg-white">
-                {/* Navigation */}
-                <nav className="bg-amber-900 text-white shadow-lg">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between h-16 items-center">
-                            <Link href="/" className="text-2xl font-bold">Blue Door Coffee</Link>
-                            <div className="flex space-x-8">
-                                <Link href="/" className="hover:text-amber-200 transition">Home</Link>
-                                <Link href="/menu" className="hover:text-amber-200 transition">Menu</Link>
-                                <Link href="/team" className="hover:text-amber-200 transition">Team</Link>
-                                <Link href="/careers" className="text-amber-200 font-semibold">Careers</Link>
-                            </div>
-                        </div>
-                    </div>
-                </nav>
-
+            <div className="min-h-screen bg-transparent">
                 {/* Header */}
-                <div className="bg-gradient-to-r from-amber-50 to-amber-100 py-12">
+                <div className="bg-ocean-gradient py-20 text-crema">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                        <h1 className="text-4xl font-bold text-amber-900 mb-2">Join Our Team</h1>
-                        <p className="text-lg text-amber-800">Build your career at Blue Door Coffee</p>
+                        <h1 className="mb-4 font-serif text-5xl font-bold tracking-tight text-crema sm:text-6xl">Join Our Team</h1>
+                        <p className="text-lg text-crema/90">Build your career at Blue Door Coffee</p>
                     </div>
                 </div>
 
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                    {flash?.success && (
+                        <p className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+                            {flash.success}
+                        </p>
+                    )}
+                    {flash?.info && (
+                        <p className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+                            {flash.info}
+                        </p>
+                    )}
+
                     {!showApplicationForm ? (
                         <>
                             {jobs.length > 0 ? (
                                 <div className="space-y-6">
                                     {jobs.map((job) => (
-                                        <div key={job.id} className="bg-white border border-amber-200 rounded-lg p-8 shadow-md hover:shadow-xl transition">
+                                        <div key={job.id} className="bg-transparent border border-mocha/20 rounded-lg p-8 shadow-md hover:shadow-xl transition">
                                             <div className="flex justify-between items-start mb-4">
                                                 <div>
-                                                    <h2 className="text-2xl font-bold text-amber-900 mb-2">{job.title}</h2>
-                                                    <div className="flex flex-wrap gap-4 text-sm text-amber-700">
+                                                    <h2 className="text-2xl font-bold text-espresso mb-2">{job.title}</h2>
+                                                    <div className="flex flex-wrap gap-4 text-sm text-crema">
                                                         <span className="flex items-center">
                                                             <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                                                 <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -113,7 +111,7 @@ export default function Careers({ jobs }: CareersProps) {
                                                 </div>
                                                 <button
                                                     onClick={() => handleApply(job.id)}
-                                                    className="bg-amber-900 text-white px-6 py-2 rounded-lg font-semibold hover:bg-amber-800 transition"
+                                                    className="bg-espresso text-white px-6 py-2 rounded-lg font-semibold hover:bg-caramel transition"
                                                 >
                                                     Apply Now
                                                 </button>
@@ -124,14 +122,14 @@ export default function Careers({ jobs }: CareersProps) {
 
                                                 {job.responsibilities && (
                                                     <div className="mt-4">
-                                                        <h3 className="text-lg font-semibold text-amber-900 mb-2">Responsibilities</h3>
+                                                        <h3 className="text-lg font-semibold text-espresso mb-2">Responsibilities</h3>
                                                         <div dangerouslySetInnerHTML={{ __html: job.responsibilities }} />
                                                     </div>
                                                 )}
 
                                                 {job.requirements && (
                                                     <div className="mt-4">
-                                                        <h3 className="text-lg font-semibold text-amber-900 mb-2">Requirements</h3>
+                                                        <h3 className="text-lg font-semibold text-espresso mb-2">Requirements</h3>
                                                         <div dangerouslySetInnerHTML={{ __html: job.requirements }} />
                                                     </div>
                                                 )}
@@ -141,9 +139,9 @@ export default function Careers({ jobs }: CareersProps) {
                                 </div>
                             ) : (
                                 <div className="text-center py-12">
-                                    <h2 className="text-2xl font-bold text-amber-900 mb-4">No Open Positions</h2>
+                                    <h2 className="text-2xl font-bold text-espresso mb-4">No Open Positions</h2>
                                     <p className="text-gray-600 mb-6">We don't have any open positions at the moment, but we're always looking for talented people!</p>
-                                    <p className="text-amber-700">Check back soon or subscribe to our newsletter to be notified of new opportunities.</p>
+                                    <p className="text-crema">Check back soon or subscribe to our newsletter to be notified of new opportunities.</p>
                                 </div>
                             )}
                         </>
@@ -151,7 +149,7 @@ export default function Careers({ jobs }: CareersProps) {
                         <div className="max-w-2xl mx-auto">
                             <button
                                 onClick={() => setShowApplicationForm(false)}
-                                className="mb-6 text-amber-900 hover:text-amber-700 flex items-center"
+                                className="mb-6 text-espresso hover:text-crema flex items-center"
                             >
                                 <svg className="w-5 h-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -159,8 +157,8 @@ export default function Careers({ jobs }: CareersProps) {
                                 Back to Job Listings
                             </button>
 
-                            <div className="bg-white border border-amber-200 rounded-lg p-8 shadow-md">
-                                <h2 className="text-2xl font-bold text-amber-900 mb-6">Submit Your Application</h2>
+                            <div className="bg-transparent border border-mocha/20 rounded-lg p-8 shadow-md">
+                                <h2 className="text-2xl font-bold text-espresso mb-6">Submit Your Application</h2>
 
                                 <form onSubmit={submit} className="space-y-6">
                                     <div>
@@ -173,7 +171,7 @@ export default function Careers({ jobs }: CareersProps) {
                                             value={data.name}
                                             onChange={(e) => setData('name', e.target.value)}
                                             required
-                                            className="w-full px-4 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                            className="w-full px-4 py-2 border border-mocha/20 rounded-lg focus:ring-2 focus:ring-caramel focus:border-transparent"
                                         />
                                         {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                                     </div>
@@ -188,7 +186,7 @@ export default function Careers({ jobs }: CareersProps) {
                                             value={data.email}
                                             onChange={(e) => setData('email', e.target.value)}
                                             required
-                                            className="w-full px-4 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                            className="w-full px-4 py-2 border border-mocha/20 rounded-lg focus:ring-2 focus:ring-caramel focus:border-transparent"
                                         />
                                         {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
                                     </div>
@@ -203,7 +201,7 @@ export default function Careers({ jobs }: CareersProps) {
                                             value={data.phone}
                                             onChange={(e) => setData('phone', e.target.value)}
                                             required
-                                            className="w-full px-4 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                            className="w-full px-4 py-2 border border-mocha/20 rounded-lg focus:ring-2 focus:ring-caramel focus:border-transparent"
                                         />
                                         {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone}</p>}
                                     </div>
@@ -217,7 +215,7 @@ export default function Careers({ jobs }: CareersProps) {
                                             value={data.cover_letter}
                                             onChange={(e) => setData('cover_letter', e.target.value)}
                                             rows={6}
-                                            className="w-full px-4 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                            className="w-full px-4 py-2 border border-mocha/20 rounded-lg focus:ring-2 focus:ring-caramel focus:border-transparent"
                                             placeholder="Tell us why you'd be a great fit for this position..."
                                         />
                                         {errors.cover_letter && <p className="mt-1 text-sm text-red-600">{errors.cover_letter}</p>}
@@ -233,7 +231,7 @@ export default function Careers({ jobs }: CareersProps) {
                                             onChange={(e) => setData('cv', e.target.files?.[0] || null)}
                                             accept=".pdf,.doc,.docx"
                                             required
-                                            className="w-full px-4 py-2 border border-amber-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                                            className="w-full px-4 py-2 border border-mocha/20 rounded-lg focus:ring-2 focus:ring-caramel focus:border-transparent"
                                         />
                                         {errors.cv && <p className="mt-1 text-sm text-red-600">{errors.cv}</p>}
                                     </div>
@@ -241,7 +239,7 @@ export default function Careers({ jobs }: CareersProps) {
                                     <button
                                         type="submit"
                                         disabled={processing}
-                                        className="w-full bg-amber-900 text-white px-8 py-3 rounded-lg font-semibold hover:bg-amber-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="w-full bg-espresso text-crema px-8 py-3 rounded-lg font-semibold tracking-widest uppercase hover:bg-caramel transition disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         {processing ? 'Submitting...' : 'Submit Application'}
                                     </button>
@@ -250,15 +248,7 @@ export default function Careers({ jobs }: CareersProps) {
                         </div>
                     )}
                 </div>
-
-                {/* Footer */}
-                <footer className="bg-amber-950 text-amber-100 py-8 mt-12">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                        <p>&copy; 2026 Blue Door Coffee. All rights reserved.</p>
-                        <p className="mt-2 text-sm">123 Coffee Street, Brewtown | (555) 123-4567</p>
-                    </div>
-                </footer>
             </div>
-        </>
+        </AppLayout>
     );
 }

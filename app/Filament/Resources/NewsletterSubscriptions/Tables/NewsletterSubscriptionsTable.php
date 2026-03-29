@@ -2,10 +2,10 @@
 
 namespace App\Filament\Resources\NewsletterSubscriptions\Tables;
 
+use App\Enums\NewsletterSubscriptionStatus;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -20,8 +20,14 @@ class NewsletterSubscriptionsTable
                     ->searchable(),
                 TextColumn::make('name')
                     ->searchable(),
-                IconColumn::make('is_subscribed')
-                    ->boolean(),
+                TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (NewsletterSubscriptionStatus|string $state): string => match ($state instanceof NewsletterSubscriptionStatus ? $state : NewsletterSubscriptionStatus::from($state)) {
+                        NewsletterSubscriptionStatus::PendingVerification => 'warning',
+                        NewsletterSubscriptionStatus::Subscribed => 'success',
+                        NewsletterSubscriptionStatus::Unsubscribed => 'gray',
+                    })
+                    ->formatStateUsing(fn (NewsletterSubscriptionStatus|string $state): string => ucwords(str_replace('_', ' ', $state instanceof NewsletterSubscriptionStatus ? $state->value : $state))),
                 TextColumn::make('verified_at')
                     ->dateTime()
                     ->sortable(),

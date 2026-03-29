@@ -20,11 +20,13 @@ class BranchResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-building-storefront';
 
-    protected static ?string $navigationLabel = 'Branches';
+    protected static ?string $navigationLabel = 'Cabang';
 
-    protected static ?string $modelLabel = 'Branch';
+    protected static ?string $modelLabel = 'Cabang';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Management';
+    protected static ?string $pluralModelLabel = 'Cabang';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Operasional Cabang';
 
     protected static ?int $navigationSort = 1;
 

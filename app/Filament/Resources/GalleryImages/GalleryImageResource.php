@@ -21,11 +21,13 @@ class GalleryImageResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;
 
-    protected static ?string $navigationLabel = 'Photo Gallery';
+    protected static ?string $navigationLabel = 'Galeri Foto';
 
-    protected static ?string $modelLabel = 'Gallery Image';
+    protected static ?string $modelLabel = 'Gambar Galeri';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Content';
+    protected static ?string $pluralModelLabel = 'Gambar Galeri';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Konten & Reputasi';
 
     protected static ?int $navigationSort = 2;
 

@@ -15,7 +15,7 @@ class ListNewsletterSubscriptions extends ListRecords
     {
         return [
             BroadcastNewsletterAction::make(),
-            CreateAction::make(),
+            CreateAction::make()->icon('heroicon-o-plus'),
         ];
     }
 }

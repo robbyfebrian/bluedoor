@@ -21,7 +21,13 @@ class JobApplicationResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Recruitment';
+    protected static ?string $navigationLabel = 'Lamaran Kerja';
+
+    protected static ?string $modelLabel = 'Lamaran Kerja';
+
+    protected static ?string $pluralModelLabel = 'Lamaran Kerja';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Rekrutmen';
 
     protected static ?int $navigationSort = 2;
 

@@ -21,7 +21,15 @@ class NewsletterSubscriptionResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedEnvelope;
 
-    protected static string|UnitEnum|null $navigationGroup = 'Marketing';
+    protected static ?string $navigationLabel = 'Langganan Newsletter';
+
+    protected static ?string $modelLabel = 'Langganan Newsletter';
+
+    protected static ?string $pluralModelLabel = 'Langganan Newsletter';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Pemasaran';
+
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {

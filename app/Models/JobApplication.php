@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\JobApplicationStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
@@ -25,6 +26,7 @@ class JobApplication extends Model
     ];
 
     protected $casts = [
+        'status' => JobApplicationStatus::class,
         'reviewed_at' => 'datetime',
     ];
 
@@ -45,27 +47,60 @@ class JobApplication extends Model
 
     public function scopePending($query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('status', JobApplicationStatus::Pending->value);
     }
 
     public function scopeReviewing($query)
     {
-        return $query->where('status', 'reviewing');
+        return $query->where('status', JobApplicationStatus::Reviewing->value);
     }
 
     public function scopeShortlisted($query)
     {
-        return $query->where('status', 'shortlisted');
+        return $query->where('status', JobApplicationStatus::Shortlisted->value);
+    }
+
+    public function canTransitionTo(JobApplicationStatus $targetStatus): bool
+    {
+        $current = $this->status instanceof JobApplicationStatus
+            ? $this->status
+            : JobApplicationStatus::from((string) $this->status);
+
+        return $current->canTransitionTo($targetStatus);
+    }
+
+    public function transitionTo(JobApplicationStatus $targetStatus, ?int $reviewerId = null, ?string $adminNotes = null): void
+    {
+        if (! $this->canTransitionTo($targetStatus)) {
+            throw new \DomainException("Invalid status transition from {$this->status->value} to {$targetStatus->value}.");
+        }
+
+        $this->status = $targetStatus;
+        $this->reviewed_at = now();
+
+        if ($reviewerId !== null) {
+            $this->reviewed_by = $reviewerId;
+        }
+
+        if ($adminNotes !== null) {
+            $this->admin_notes = $adminNotes;
+        }
+
+        $this->save();
     }
 
     public function getStatusBadgeColorAttribute(): string
     {
-        return match($this->status) {
-            'pending' => 'warning',
-            'reviewing' => 'info',
-            'shortlisted' => 'success',
-            'rejected' => 'danger',
-            'hired' => 'success',
+        $status = $this->status instanceof JobApplicationStatus
+            ? $this->status
+            : JobApplicationStatus::from((string) $this->status);
+
+        return match($status) {
+            JobApplicationStatus::Pending => 'warning',
+            JobApplicationStatus::Reviewing => 'info',
+            JobApplicationStatus::Shortlisted => 'success',
+            JobApplicationStatus::Rejected => 'danger',
+            JobApplicationStatus::Hired => 'success',
             default => 'secondary',
         };
     }
@@ -73,9 +108,9 @@ class JobApplication extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['applicant_name', 'status', 'reviewed_by', 'notes'])
+            ->logOnly(['name', 'status', 'reviewed_by', 'admin_notes'])
             ->logOnlyDirty()
             ->dontSubmitEmptyLogs()
-            ->setDescriptionForEvent(fn(string $eventName) => "Job application {$eventName}: {$this->applicant_name} - Status: {$this->status}");
+            ->setDescriptionForEvent(fn(string $eventName) => "Job application {$eventName}: {$this->name} - Status: {$this->status->value}");
     }
 }
