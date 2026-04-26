@@ -3,22 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\Enums\JobApplicationStatus;
+use App\Enums\NewsletterSubscriptionStatus;
+use App\Models\Branch;
 use App\Models\JobOpening;
 use App\Models\JobApplication;
+use App\Models\NewsletterSubscription;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class CareersController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $jobs = JobOpening::active()
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $query = JobOpening::with('branch')->active();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('branch') && $request->branch !== 'all') {
+            $query->where('branch_id', $request->branch);
+        }
+
+        if ($request->filled('type') && $request->type !== 'all') {
+            $query->where('type', $request->type);
+        }
+
+        $jobs = $query->orderBy('created_at', 'desc')->paginate(6)->withQueryString();
+            
+        $branches = Branch::active()->get(['id', 'name']);
 
         return Inertia::render('Careers', [
             'jobs' => $jobs,
+            'branches' => $branches,
+            'filters' => $request->only(['search', 'branch', 'type']),
         ]);
     }
 
@@ -60,6 +83,24 @@ class CareersController extends Controller
             'cv_path' => $cvPath,
             'status' => 'pending',
         ]);
+
+        $subscription = NewsletterSubscription::where('email', $validated['email'])->first();
+
+        if ($subscription) {
+            if ($subscription->status !== NewsletterSubscriptionStatus::Subscribed) {
+                $subscription->name = $validated['name'] ?? $subscription->name;
+                $subscription->save();
+                $subscription->transitionTo(NewsletterSubscriptionStatus::Subscribed);
+            }
+        } else {
+            NewsletterSubscription::create([
+                'email' => $validated['email'],
+                'name' => $validated['name'],
+                'status' => NewsletterSubscriptionStatus::Subscribed,
+                'is_subscribed' => true,
+                'verified_at' => now(),
+            ]);
+        }
 
         return back()->with('success', 'Application submitted successfully!');
     }

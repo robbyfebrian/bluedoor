@@ -26,7 +26,7 @@ class BranchForm
                     ->schema([
                         TextInput::make('name')
                             ->label('Nama Cabang')
-                            ->placeholder('Contoh: Blue Door Coffee – Sudirman')
+                            ->placeholder('Contoh: Bluedoor Coffee - Sudirman')
                             ->required()
                             ->maxLength(255)
                             ->live(onBlur: true)

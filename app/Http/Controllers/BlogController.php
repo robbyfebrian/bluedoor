@@ -25,9 +25,8 @@ class BlogController extends Controller
             'all' => 'All Posts',
             'news' => 'News',
             'recipes' => 'Recipes',
-            'coffee_tips' => 'Coffee Tips',
+            'tips' => 'Tips & Tricks',
             'events' => 'Events',
-            'behind_the_scenes' => 'Behind the Scenes',
         ];
 
         return inertia('Blog/Index', [
