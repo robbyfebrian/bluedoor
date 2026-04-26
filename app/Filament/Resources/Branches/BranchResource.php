@@ -12,6 +12,7 @@ use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class BranchResource extends Resource
@@ -26,9 +27,9 @@ class BranchResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Cabang';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Operasional Cabang';
+    protected static string|UnitEnum|null $navigationGroup = 'Manajemen Cabang';
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {
@@ -45,6 +46,13 @@ class BranchResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['manager'])
+            ->withCount('employees');
     }
 
     public static function getPages(): array

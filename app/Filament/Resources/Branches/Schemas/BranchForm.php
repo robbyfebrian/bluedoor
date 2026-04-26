@@ -18,103 +18,147 @@ class BranchForm
     {
         return $schema
             ->components([
-                Section::make('Branch Information')
+                Section::make('Informasi Cabang')
+                    ->description('Nama dan identifikasi unik cabang.')
+                    ->icon('heroicon-o-building-storefront')
+                    ->columnSpanFull()
+                    ->columns(3)
                     ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                TextInput::make('name')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->live(onBlur: true)
-                                    ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state)))
-                                    ->label('Branch Name'),
-                                TextInput::make('code')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->unique(ignoreRecord: true)
-                                    ->label('Branch Code')
-                                    ->helperText('e.g., BDJ01, BDJ02')
-                                    ->placeholder('BDJ01'),
-                            ]),
-                        TextInput::make('slug')
+                        TextInput::make('name')
+                            ->label('Nama Cabang')
+                            ->placeholder('Contoh: Blue Door Coffee – Sudirman')
                             ->required()
                             ->maxLength(255)
-                            ->unique(ignoreRecord: true)
-                            ->helperText('Auto-generated from branch name')
-                            ->label('Slug'),
-                    ]),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function ($state, callable $set): void {
+                                $set('slug', Str::slug($state));
+                                $set('code', self::generateBranchCode($state));
+                            }),
 
-                Section::make('Location Details')
-                    ->schema([
-                        Textarea::make('address')
+                        TextInput::make('code')
+                            ->label('Kode Cabang')
+                            ->placeholder('otomatis-generate')
                             ->required()
-                            ->maxLength(65535)
+                            ->maxLength(20)
+                            ->disabled()
+                            ->dehydrated()
+                            ->unique(ignoreRecord: true)
+                            ->helperText('Otomatis Generate'),
+
+                        TextInput::make('slug')
+                            ->label('Slug URL')
+                            ->maxLength(255)
+                            ->disabled()
+                            ->dehydrated()
+                            ->unique(ignoreRecord: true)
+                            ->placeholder('otomatis-dari-nama')
+                            ->dehydrated()
+                            ->helperText('Otomatis Generate'),
+
+                         Textarea::make('address')
+                            ->label('Alamat Lengkap')
+                            ->placeholder('Jl. Contoh No. 1, Kelurahan, Kecamatan')
+                            ->required()
                             ->rows(3)
-                            ->columnSpanFull()
-                            ->label('Address'),
-                        Grid::make(3)
-                            ->schema([
-                                TextInput::make('city')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->label('City'),
-                                TextInput::make('province')
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->label('Province'),
-                                TextInput::make('postal_code')
-                                    ->maxLength(255)
-                                    ->label('Postal Code'),
-                            ]),
+                            ->columnSpanFull(),
+
+                        TextInput::make('city')
+                            ->label('Kota')
+                            ->placeholder('Jakarta Pusat')
+                            ->required()
+                            ->maxLength(255),
+
+                        TextInput::make('province')
+                            ->label('Provinsi')
+                            ->placeholder('DKI Jakarta')
+                            ->required()
+                            ->maxLength(255),
+
+                        TextInput::make('postal_code')
+                            ->label('Kode Pos')
+                            ->placeholder('10220')
+                            ->maxLength(10),
                     ]),
 
-                Section::make('Contact Information')
+                Section::make('Kontak')
+                    ->description('Informasi kontak publik cabang.')
+                    ->icon('heroicon-o-phone')
                     ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                TextInput::make('phone')
-                                    ->tel()
-                                    ->required()
-                                    ->maxLength(255)
-                                    ->label('Phone Number'),
-                                TextInput::make('email')
-                                    ->email()
-                                    ->maxLength(255)
-                                    ->label('Email Address'),
-                            ]),
+                        Grid::make(2)->schema([
+                            TextInput::make('phone')
+                                ->label('Nomor Telepon')
+                                ->placeholder('(021) 1234-5678')
+                                ->tel()
+                                ->required()
+                                ->maxLength(20),
+
+                            TextInput::make('email')
+                                ->label('Email Cabang')
+                                ->placeholder('namalocal@bluedoor.id')
+                                ->email()
+                                ->maxLength(255),
+                        ]),
                     ]),
 
-                Section::make('Operating Hours')
+                Section::make('Jam Operasional')
+                    ->description('Waktu buka dan tutup cabang setiap harinya.')
+                    ->icon('heroicon-o-clock')
                     ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                TimePicker::make('opening_time')
-                                    ->required()
-                                    ->default('08:00:00')
-                                    ->label('Opening Time'),
-                                TimePicker::make('closing_time')
-                                    ->required()
-                                    ->default('22:00:00')
-                                    ->label('Closing Time'),
-                            ]),
+                        Grid::make(2)->schema([
+                            TimePicker::make('opening_time')
+                                ->label('Jam Buka')
+                                ->required()
+                                ->default('08:00:00'),
+
+                            TimePicker::make('closing_time')
+                                ->label('Jam Tutup')
+                                ->required()
+                                ->default('22:00:00'),
+                        ]),
                     ]),
 
-                Section::make('Management')
+                Section::make('Manajemen')
+                    ->description('Pengaturan manajer dan status aktif cabang.')
+                    ->icon('heroicon-o-user-circle')
+                    ->columnSpanFull()
                     ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                Select::make('manager_id')
-                                    ->relationship('manager', 'name')
-                                    ->searchable()
-                                    ->preload()
-                                    ->label('Branch Manager')
-                                    ->helperText('Select a user to manage this branch'),
-                                Toggle::make('is_active')
-                                    ->default(true)
-                                    ->label('Active')
-                                    ->helperText('Inactive branches won\'t appear on public pages'),
-                            ]),
+                        Grid::make(2)->schema([
+                            Select::make('manager_id')
+                                ->label('Manajer Cabang')
+                                ->relationship('manager', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->nullable()
+                                ->helperText('Pilih pengguna yang bertanggung jawab atas cabang ini.'),
+
+                            Toggle::make('is_active')
+                                ->label('Cabang Aktif')
+                                ->default(true)
+                                ->inline(false)
+                                ->helperText('Cabang nonaktif tidak akan muncul di halaman publik.'),
+                        ]),
                     ]),
             ]);
+    }
+
+    protected static function generateBranchCode(?string $name): string
+    {
+        if (blank($name)) {
+            return '';
+        }
+
+        $normalizedName = Str::upper(Str::ascii($name));
+        $segments = preg_split('/[^A-Z0-9]+/', $normalizedName, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $initials = collect($segments)
+            ->map(fn (string $segment) => Str::substr($segment, 0, 1))
+            ->implode('');
+
+        if ($initials === '') {
+            $initials = Str::upper(substr(preg_replace('/[^A-Za-z0-9]/', '', $name) ?? '', 0, 3));
+        }
+
+        $baseCode = Str::substr($initials, 0, 18);
+
+        return $baseCode . '-01';
     }
 }

@@ -20,11 +20,10 @@ class MenuItem extends Model
         'is_available',
         'is_featured',
         'allergens',
-        'order',
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
+        'price' => 'integer',
         'is_available' => 'boolean',
         'is_featured' => 'boolean',
         'allergens' => 'array',
@@ -65,10 +64,5 @@ class MenuItem extends Model
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', true);
-    }
-
-    public function scopeOrdered($query)
-    {
-        return $query->orderBy('order');
     }
 }

@@ -20,14 +20,8 @@ class UserSeeder extends Seeder
                 'role' => 'super_admin',
             ],
             [
-                'name' => 'Admin Workflow',
-                'email' => 'workflow-admin@bluedoor.com',
-                'password' => bcrypt('password'),
-                'role' => 'admin',
-            ],
-            [
-                'name' => 'Manager Cabang',
-                'email' => 'manager-cabang@bluedoor.com',
+                'name' => 'Manager',
+                'email' => 'manager@bluedoor.com',
                 'password' => bcrypt('password'),
                 'role' => 'manager_cabang',
             ],
@@ -36,6 +30,12 @@ class UserSeeder extends Seeder
                 'email' => 'peninjau@bluedoor.com',
                 'password' => bcrypt('password'),
                 'role' => 'peninjau',
+            ],
+            [
+                'name' => 'User',
+                'email' => 'user@bluedoor.com',
+                'password' => bcrypt('password'),
+                'role' => 'user',
             ],
         ];
 

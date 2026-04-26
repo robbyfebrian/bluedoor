@@ -3,12 +3,12 @@
 namespace App\Filament\Resources\GalleryImages\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\Action;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\ImageColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
@@ -18,70 +18,84 @@ class GalleryImagesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->emptyStateIcon('heroicon-o-photo')
+            ->emptyStateHeading('Belum Ada Gambar Galeri')
+            ->emptyStateDescription('Belum ada gambar galeri yang ditambahkan, anda dapat menambahkan secara manual lewat button "Tambah Gambar" di atas')
             ->columns([
+                TextColumn::make('order')
+                    ->label('#')
+                    ->sortable()
+                    ->alignCenter()
+                    ->width('48px'),
+
                 ImageColumn::make('image_path')
+                    ->label('Foto')
                     ->disk('public')
-                    ->size(80)
-                    ->label('Image'),
+                    ->size(72)
+                    ->square(),
+
                 TextColumn::make('title')
+                    ->label('Judul')
                     ->searchable()
                     ->sortable()
-                    ->label('Title')
-                    ->default('(No title)'),
+                    ->default('(Tanpa judul)'),
+
                 TextColumn::make('category')
+                    ->label('Kategori')
                     ->badge()
                     ->color(fn ($state) => match ($state) {
-                        'coffee' => 'amber',
-                        'food' => 'success',
+                        'coffee'   => 'amber',
+                        'food'     => 'success',
                         'ambiance' => 'info',
-                        'events' => 'warning',
-                        default => 'gray',
+                        'events'   => 'warning',
+                        default    => 'gray',
                     })
-                    ->formatStateUsing(fn ($state) => ucfirst($state))
-                    ->sortable()
-                    ->label('Category'),
-                TextColumn::make('order')
-                    ->numeric()
-                    ->sortable()
-                    ->label('Order'),
-                IconColumn::make('is_active')
-                    ->boolean()
-                    ->sortable()
-                    ->label('Active'),
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'coffee'   => 'Kopi',
+                        'food'     => 'Makanan',
+                        'ambiance' => 'Suasana',
+                        'events'   => 'Acara',
+                        default    => ucfirst($state),
+                    })
+                    ->sortable(),
+
+                ToggleColumn::make('is_active')
+                    ->label('Aktif')
+                    ->alignCenter(),
+
                 TextColumn::make('created_at')
-                    ->dateTime()
+                    ->label('Dibuat')
+                    ->dateTime('d M Y')
                     ->sortable()
-                    ->toggleable()
-                    ->label('Created'),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('category')
+                    ->label('Kategori')
                     ->options([
-                        'coffee' => 'Coffee',
-                        'food' => 'Food',
-                        'ambiance' => 'Ambiance',
-                        'events' => 'Events',
+                        'coffee'   => 'Kopi',
+                        'food'     => 'Makanan',
+                        'ambiance' => 'Suasana',
+                        'events'   => 'Acara',
                     ]),
+
                 TernaryFilter::make('is_active')
                     ->label('Status')
-                    ->placeholder('All images')
-                    ->trueLabel('Active only')
-                    ->falseLabel('Inactive only'),
+                    ->placeholder('Semua')
+                    ->trueLabel('Aktif')
+                    ->falseLabel('Nonaktif'),
             ])
             ->recordActions([
-                Action::make('toggle_active')
-                    ->icon(fn ($record) => $record->is_active ? 'heroicon-o-eye-slash' : 'heroicon-o-eye')
-                    ->color(fn ($record) => $record->is_active ? 'danger' : 'success')
-                    ->action(fn ($record) => $record->update(['is_active' => !$record->is_active]))
-                    ->label(fn ($record) => $record->is_active ? 'Deactivate' : 'Activate'),
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
             ])
+            ->reorderable('order')
             ->defaultSort('order', 'asc')
-            ->reorderable('order');
+            ->striped();
     }
 }

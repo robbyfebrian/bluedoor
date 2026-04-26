@@ -3,11 +3,11 @@
 namespace App\Filament\Resources\Branches\Tables;
 
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Actions\Action;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
@@ -16,61 +16,75 @@ class BranchesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->emptyStateIcon('heroicon-o-building-storefront')
+            ->emptyStateHeading('Belum Ada Cabang')
+            ->emptyStateDescription('Belum ada cabang yang ditambahkan, anda dapat menambahkan cabang secara manual lewat button "Tambah Cabang" di atas')
             ->columns([
                 TextColumn::make('code')
+                    ->label('Kode')
                     ->badge()
                     ->color('info')
                     ->searchable()
-                    ->sortable()
-                    ->label('Code'),
+                    ->sortable(),
+
                 TextColumn::make('name')
+                    ->label('Nama Cabang')
                     ->searchable()
                     ->sortable()
-                    ->label('Branch Name'),
+                    ->weight('semibold'),
+
                 TextColumn::make('city')
+                    ->label('Kota')
                     ->searchable()
-                    ->sortable()
-                    ->label('City'),
+                    ->sortable(),
+
                 TextColumn::make('phone')
+                    ->label('Telepon')
                     ->searchable()
-                    ->label('Phone'),
+                    ->copyable(),
+
                 TextColumn::make('manager.name')
+                    ->label('Manajer')
                     ->searchable()
                     ->sortable()
-                    ->label('Manager')
-                    ->placeholder('No manager assigned'),
-                TextColumn::make('opening_time')
-                    ->time('H:i')
-                    ->label('Opens'),
-                TextColumn::make('closing_time')
-                    ->time('H:i')
-                    ->label('Closes'),
-                IconColumn::make('is_active')
-                    ->boolean()
+                    ->placeholder('Belum ada manajer'),
+
+                TextColumn::make('employees_count')
+                    ->label('Karyawan')
+                    ->badge()
+                    ->color('success')
                     ->sortable()
-                    ->label('Active'),
+                    ->alignCenter(),
+
+                TextColumn::make('opening_time')
+                    ->label('Buka')
+                    ->time('H:i'),
+
+                TextColumn::make('closing_time')
+                    ->label('Tutup')
+                    ->time('H:i'),
+
+                ToggleColumn::make('is_active')
+                    ->label('Aktif')
+                    ->alignCenter(),
             ])
             ->filters([
                 TernaryFilter::make('is_active')
                     ->label('Status')
-                    ->placeholder('All branches')
-                    ->trueLabel('Active only')
-                    ->falseLabel('Inactive only'),
+                    ->placeholder('Semua Cabang')
+                    ->trueLabel('Aktif')
+                    ->falseLabel('Nonaktif'),
             ])
             ->recordActions([
-                Action::make('toggle_active')
-                    ->icon(fn ($record) => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
-                    ->color(fn ($record) => $record->is_active ? 'danger' : 'success')
-                    ->action(fn ($record) => $record->update(['is_active' => !$record->is_active]))
-                    ->label(fn ($record) => $record->is_active ? 'Deactivate' : 'Activate')
-                    ->requiresConfirmation(),
                 EditAction::make(),
+                DeleteAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->defaultSort('code', 'asc');
+            ->defaultSort('code', 'asc')
+            ->striped();
     }
 }

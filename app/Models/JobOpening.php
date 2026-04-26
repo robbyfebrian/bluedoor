@@ -65,7 +65,7 @@ class JobOpening extends Model
     public function getSalaryRangeAttribute(): ?string
     {
         if ($this->salary_min && $this->salary_max) {
-            return '$' . number_format($this->salary_min, 0) . ' - $' . number_format($this->salary_max, 0);
+            return 'Rp ' . number_format((float) $this->salary_min, 0, ',', '.') . ' – Rp ' . number_format((float) $this->salary_max, 0, ',', '.');
         }
 
         return null;

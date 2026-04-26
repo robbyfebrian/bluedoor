@@ -20,114 +20,112 @@ class BlogPostForm
     {
         return $schema
             ->components([
-                Section::make('Post Content')
+                Section::make('Konten Posting')
+                    ->icon('heroicon-o-document-text')
                     ->schema([
-                        TextInput::make('title')
-                            ->required()
-                            ->maxLength(255)
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state)))
-                            ->label('Title'),
-                        TextInput::make('slug')
-                            ->required()
-                            ->maxLength(255)
-                            ->unique(ignoreRecord: true)
-                            ->helperText('Auto-generated from title')
-                            ->label('Slug'),
+                        Grid::make(2)->schema([
+                            TextInput::make('title')
+                                ->label('Judul')
+                                ->placeholder('Judul artikel blog')
+                                ->required()
+                                ->maxLength(255)
+                                ->live(onBlur: true)
+                                ->afterStateUpdated(fn ($state, callable $set) => $set('slug', Str::slug($state))),
+
+                            TextInput::make('slug')
+                                ->label('Slug URL')
+                                ->required()
+                                ->maxLength(255)
+                                ->unique(ignoreRecord: true)
+                                ->helperText('Otomatis dibuat dari judul.')
+                                ->dehydrated()
+                                ->disabled(fn ($record) => $record !== null),
+                        ]),
+
                         Textarea::make('excerpt')
+                            ->label('Ringkasan')
+                            ->placeholder('Ringkasan singkat artikel (tampil pada preview)')
                             ->required()
                             ->maxLength(500)
                             ->rows(3)
-                            ->columnSpanFull()
-                            ->label('Excerpt')
-                            ->helperText('Brief summary for previews'),
+                            ->columnSpanFull(),
+
                         RichEditor::make('content')
+                            ->label('Isi Artikel')
                             ->required()
                             ->columnSpanFull()
-                            ->label('Content')
                             ->toolbarButtons([
-                                'bold',
-                                'italic',
-                                'underline',
-                                'strike',
-                                'link',
-                                'heading',
-                                'bulletList',
-                                'orderedList',
-                                'blockquote',
-                                'codeBlock',
-                                'undo',
-                                'redo',
+                                'bold', 'italic', 'underline', 'strike',
+                                'link', 'heading', 'bulletList', 'orderedList',
+                                'blockquote', 'codeBlock', 'undo', 'redo',
                             ]),
                     ]),
 
-                Section::make('Featured Image')
+                Section::make('Gambar Unggulan')
+                    ->icon('heroicon-o-photo')
                     ->schema([
                         FileUpload::make('featured_image')
+                            ->label('Gambar Unggulan')
                             ->image()
                             ->disk('public')
                             ->directory('blog')
                             ->maxSize(5120)
                             ->imageEditor()
-                            ->columnSpanFull()
-                            ->label('Featured Image'),
+                            ->columnSpanFull(),
                     ])
                     ->collapsible(),
 
-                Section::make('Metadata')
+                Section::make('Metadata & Kategori')
+                    ->icon('heroicon-o-tag')
                     ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                Select::make('category')
-                                    ->required()
-                                    ->options([
-                                        'news' => 'News',
-                                        'recipes' => 'Recipes',
-                                        'coffee_tips' => 'Coffee Tips',
-                                        'events' => 'Events',
-                                        'behind_the_scenes' => 'Behind the Scenes',
-                                    ])
-                                    ->default('news')
-                                    ->native(false)
-                                    ->label('Category'),
-                                Select::make('author_id')
-                                    ->relationship('author', 'name')
-                                    ->required()
-                                    ->default(fn () => auth()->guard()->id())
-                                    ->label('Author'),
-                            ]),
+                        Grid::make(2)->schema([
+                            Select::make('category')
+                                ->label('Kategori')
+                                ->required()
+                                ->options([
+                                    'news'    => 'Berita',
+                                    'recipes' => 'Resep',
+                                    'events'  => 'Acara',
+                                    'tips'    => 'Tips & Trik',
+                                ])
+                                ->default('news')
+                                ->native(false),
+
+                            Select::make('author_id')
+                                ->label('Penulis')
+                                ->relationship('author', 'name')
+                                ->required()
+                                ->searchable()
+                                ->preload()
+                                ->default(fn () => auth()->guard()->id()),
+                        ]),
+
                         TagsInput::make('tags')
-                            ->suggestions([
-                                'coffee',
-                                'espresso',
-                                'latte',
-                                'cappuccino',
-                                'brewing',
-                                'barista',
-                                'recipe',
-                                'events',
-                            ])
-                            ->columnSpanFull()
-                            ->label('Tags'),
+                            ->label('Tag')
+                            ->placeholder('Tambah tag...')
+                            ->suggestions(['kopi', 'espresso', 'latte', 'cappuccino', 'manual brew', 'barista', 'resep', 'acara'])
+                            ->columnSpanFull(),
                     ]),
 
-                Section::make('Publishing')
+                Section::make('Penerbitan')
+                    ->icon('heroicon-o-calendar')
                     ->schema([
-                        Grid::make(2)
-                            ->schema([
-                                Select::make('status')
-                                    ->required()
-                                    ->options([
-                                        'draft' => 'Draft',
-                                        'published' => 'Published',
-                                    ])
-                                    ->default('draft')
-                                    ->native(false)
-                                    ->label('Status'),
-                                DateTimePicker::make('published_at')
-                                    ->label('Publish Date')
-                                    ->helperText('Leave empty to use creation date'),
-                            ]),
+                        Grid::make(2)->schema([
+                            Select::make('status')
+                                ->label('Status')
+                                ->required()
+                                ->options([
+                                    'draft'     => 'Draf',
+                                    'published' => 'Terbit',
+                                ])
+                                ->default('draft')
+                                ->native(false),
+
+                            DateTimePicker::make('published_at')
+                                ->label('Tanggal Terbit')
+                                ->helperText('Kosongkan untuk menggunakan tanggal pembuatan.')
+                                ->native(false),
+                        ]),
                     ]),
             ]);
     }

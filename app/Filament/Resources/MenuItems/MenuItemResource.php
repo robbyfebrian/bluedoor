@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class MenuItemResource extends Resource
@@ -21,15 +22,15 @@ class MenuItemResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCake;
 
-    protected static ?string $navigationLabel = 'Item Menu';
+    protected static ?string $navigationLabel = 'Daftar Menu';
 
-    protected static ?string $modelLabel = 'Item Menu';
+    protected static ?string $modelLabel = 'Daftar Menu';
 
-    protected static ?string $pluralModelLabel = 'Item Menu';
+    protected static ?string $pluralModelLabel = 'Daftar Menu';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Operasional Cabang';
+    protected static string|UnitEnum|null $navigationGroup = 'Manajemen Menu';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Schema $schema): Schema
     {
@@ -46,6 +47,12 @@ class MenuItemResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['menuCategory', 'menuCategory.branch']);
     }
 
     public static function getPages(): array

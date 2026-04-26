@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Branches\Pages;
 
 use App\Filament\Resources\Branches\BranchResource;
 use Filament\Actions\DeleteAction;
+use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditBranch extends EditRecord
@@ -13,6 +14,7 @@ class EditBranch extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            ViewAction::make(),
             DeleteAction::make(),
         ];
     }

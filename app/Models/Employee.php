@@ -15,7 +15,6 @@ class Employee extends Model
         'bio',
         'photo',
         'email',
-        'order',
         'is_active',
     ];
 
@@ -37,10 +36,5 @@ class Employee extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
-    }
-
-    public function scopeOrdered($query)
-    {
-        return $query->orderBy('order');
     }
 }

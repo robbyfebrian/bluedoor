@@ -15,12 +15,12 @@ class HomeController extends Controller
         $featuredItems = MenuItem::with('menuCategory')
             ->featured()
             ->available()
-            ->ordered()
+            // ->ordered()
             ->limit(6)
             ->get();
 
         $teamMembers = Employee::active()
-            ->ordered()
+            // ->ordered()
             ->limit(4)
             ->get();
 

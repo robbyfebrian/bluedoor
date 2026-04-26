@@ -27,7 +27,7 @@ class GalleryImageResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Gambar Galeri';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Konten & Reputasi';
+    protected static string|UnitEnum|null $navigationGroup = 'Manajemen Konten';
 
     protected static ?int $navigationSort = 2;
 

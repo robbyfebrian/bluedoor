@@ -13,13 +13,14 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class MenuCategoryResource extends Resource
 {
     protected static ?string $model = MenuCategory::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedListBullet;
 
     protected static ?string $navigationLabel = 'Kategori Menu';
 
@@ -27,9 +28,9 @@ class MenuCategoryResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Kategori Menu';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Operasional Cabang';
+    protected static string|UnitEnum|null $navigationGroup = 'Manajemen Menu';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 1;
 
     public static function form(Schema $schema): Schema
     {
@@ -46,6 +47,13 @@ class MenuCategoryResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['branch'])
+            ->withCount('menuItems');
     }
 
     public static function getPages(): array

@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class JobApplicationResource extends Resource
@@ -27,7 +28,7 @@ class JobApplicationResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Lamaran Kerja';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Rekrutmen';
+    protected static string|UnitEnum|null $navigationGroup = 'Manajemen Rekrutmen';
 
     protected static ?int $navigationSort = 2;
 
@@ -46,6 +47,12 @@ class JobApplicationResource extends Resource
         return [
                 //
             ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->with(['jobOpening', 'jobOpening.branch', 'reviewer']);
     }
 
     public static function getPages(): array

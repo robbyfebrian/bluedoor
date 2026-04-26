@@ -13,6 +13,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use UnitEnum;
 
 class ReviewResource extends Resource
@@ -27,7 +28,7 @@ class ReviewResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Ulasan';
 
-    protected static string|UnitEnum|null $navigationGroup = 'Konten & Reputasi';
+    protected static string|UnitEnum|null $navigationGroup = 'Manajemen Konten';
 
     protected static ?int $navigationSort = 1;
 
@@ -46,6 +47,11 @@ class ReviewResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->with(['approver']);
     }
 
     public static function getPages(): array
