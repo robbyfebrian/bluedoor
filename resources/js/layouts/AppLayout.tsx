@@ -1,10 +1,20 @@
-import { Link, usePage } from '@inertiajs/react';
+import { Link, usePage, router } from '@inertiajs/react';
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import { useLenis } from '@/hooks/useLenis';
 import type { SharedData } from '@/types';
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
 import RollingText from '@/Components/RollingText';
 import ToastNotification from '@/Components/ToastNotification';
+
+function ScrollReset() {
+    useEffect(() => {
+        // Scroll to top instantly when the new component mounts
+        window.scrollTo(0, 0);
+        // @ts-ignore
+        if (window.lenis) window.lenis.scrollTo(0, { immediate: true });
+    }, []);
+    return null;
+}
 
 interface AppLayoutProps {
     children: ReactNode;
@@ -22,6 +32,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const footerRef = useRef<HTMLElement>(null);
     const [footerHeight, setFooterHeight] = useState(0);
+
+    // Prevent scroll jump during exit animation globally
+    useEffect(() => {
+        const removeBefore = router.on('before', (event) => {
+            event.detail.visit.preserveScroll = true;
+        });
+        return () => removeBefore();
+    }, []);
 
     // Body scroll lock when mobile menu is open
     useEffect(() => {
@@ -126,6 +144,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     {/* Left Links */}
                     <div className="hidden lg:flex w-1/3 items-center space-x-8 text-[12px] font-medium uppercase tracking-[0.2em]">
                         <Link href="/menu"><RollingText text="Menu" className="" /></Link>
+                        <Link href="/gallery"><RollingText text="Gallery" className="" /></Link>
+                        <Link href="/locations"><RollingText text="Locations" className="" /></Link>
                         <Link href="/team"><RollingText text="Team" className="" /></Link>
                         <Link href="/careers"><RollingText text="Careers" className="" /></Link>
                         <Link href="/reviews"><RollingText text="Reviews" className="" /></Link>
@@ -174,6 +194,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
                         <div className="flex flex-col items-center justify-center space-y-10 font-serif text-5xl font-light z-10 relative">
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}><Link href="/menu" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-gold transition-colors">Menu</Link></motion.div>
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}><Link href="/gallery" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-gold transition-colors">Gallery</Link></motion.div>
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}><Link href="/locations" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-gold transition-colors">Locations</Link></motion.div>
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}><Link href="/team" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-gold transition-colors">Team</Link></motion.div>
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}><Link href="/careers" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-gold transition-colors">Careers</Link></motion.div>
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}><Link href="/reviews" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-gold transition-colors">Reviews</Link></motion.div>
@@ -195,6 +217,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 1 }}
                 >
+                    <ScrollReset />
                     {/* The actual page content */}
                     <div className="relative z-10 flex-1 flex flex-col rounded-b-[2.5rem] overflow-hidden">
                         {children}
@@ -210,7 +233,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
                             return (
                                 <motion.div
                                     key={i}
-                                    className="flex-1 border-r border-ocean-start/20 last:border-r-0"
+                                    className="flex-1 border-r border-ocean-start/20 last:border-r-0 isolate transform-gpu"
                                     style={{
                                         height: `${h}vh`,
                                         backgroundImage: `${noiseSvg}, linear-gradient(135deg, var(--color-ocean-start) 0%, var(--color-ocean-end) 100%)`,
@@ -220,8 +243,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
                                         backgroundBlendMode: 'soft-light, normal'
                                     }}
                                     initial={{ y: 0 }}
-                                    animate={{ y: "-100%" }}
-                                    exit={{ y: 0 }}
+                                    animate={{ y: "-100%", transitionEnd: { display: "none" } }}
+                                    exit={{ display: "block", y: 0 }}
                                     transition={{
                                         duration: 0.8,
                                         ease: [0.76, 0, 0.24, 1],
@@ -243,11 +266,24 @@ export default function AppLayout({ children }: AppLayoutProps) {
                 className="fixed bottom-0 left-0 w-full py-12 text-crema/80 z-0"
             >
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 gap-12 md:grid-cols-3 md:gap-12">
+                    <div className="grid grid-cols-1 gap-12 md:grid-cols-4 md:gap-12">
                         {/* Brand & Tagline */}
                         <div className="flex flex-col text-center md:text-left items-center md:items-start">
                             <img src="/images/logo.png" alt="Blue Doors" className="h-20 w-32 object-cover opacity-80" />
                             <p className="text-base italic text-crema/60">Home for Better Coffee</p>
+                        </div>
+
+                        {/* Explore Links */}
+                        <div className="flex flex-col text-center md:text-left items-center md:items-start">
+                            <h4 className="font-serif text-lg font-bold text-crema">Explore</h4>
+                            <div className="mt-4 flex flex-col space-y-2 text-sm text-crema/60 items-center md:items-start">
+                                <Link href="/menu"><RollingText text="Menu" className="" /></Link>
+                                <Link href="/gallery"><RollingText text="Gallery" className="" /></Link>
+                                <Link href="/locations"><RollingText text="Locations" className="" /></Link>
+                                <Link href="/team"><RollingText text="Team" className="" /></Link>
+                                <Link href="/careers"><RollingText text="Careers" className="" /></Link>
+                                <Link href="/reviews"><RollingText text="Reviews" className="" /></Link>
+                            </div>
                         </div>
 
                         {/* Address */}

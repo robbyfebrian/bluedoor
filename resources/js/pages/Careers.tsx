@@ -226,10 +226,19 @@ export default function Careers({ jobs, branches, filters }: CareersProps) {
                     </div>
                 </section>
 
+                {/* NOTIFICATIONS */}
+                <div className="max-w-screen-2xl mx-auto px-6 lg:px-12 pt-8 -mb-16 relative z-30">
+                    {(flash?.success || flash?.error || flash?.info) && (
+                        <div className="mb-6 p-4 bg-[#E3F2FD] border border-[#90CAF9] text-[#1565C0] rounded-sm flex items-center justify-center gap-3">
+                            <span className="text-lg">ℹ</span>
+                            <p className="font-medium text-sm tracking-wide">{flash.success || flash.error || flash.info}</p>
+                        </div>
+                    )}
+                </div>
+
                 {/* BENTO GRID */}
                 <section className="py-24 px-6 lg:px-12 max-w-screen-2xl mx-auto min-h-[50vh]">
 
-                    {/* NOTIFICATIONS HANDLED GLOBALLY */}
                     <AnimatePresence mode='wait'>
                         {filteredJobs.length > 0 ? (
                             <motion.div

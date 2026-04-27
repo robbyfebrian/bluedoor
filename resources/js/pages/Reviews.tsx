@@ -136,10 +136,10 @@ export default function Reviews({ reviews, averageRating, totalReviews }: Review
 
                 {/* NOTIFICATIONS */}
                 <div className="max-w-screen-2xl mx-auto px-6 lg:px-12 -mt-6 relative z-30">
-                    {flash?.info && (
+                    {(flash?.success || flash?.error || flash?.info) && (
                         <div className="mb-6 p-4 bg-[#E3F2FD] border border-[#90CAF9] text-[#1565C0] rounded-sm flex items-center justify-center gap-3">
                             <span className="text-lg">ℹ</span>
-                            <p className="font-medium text-sm tracking-wide">{flash.info}</p>
+                            <p className="font-medium text-sm tracking-wide">{flash.success || flash.error || flash.info}</p>
                         </div>
                     )}
                 </div>

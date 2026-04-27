@@ -7,6 +7,7 @@ use App\Http\Controllers\CareersController;
 use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\LocationController;
 use App\Http\Controllers\BlogController;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,7 @@ Route::get('/careers', [CareersController::class, 'index'])->name('careers');
 // New feature routes
 Route::get('/reviews', [ReviewController::class, 'index'])->name('reviews');
 Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery');
+Route::get('/locations', [LocationController::class, 'index'])->name('locations');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
