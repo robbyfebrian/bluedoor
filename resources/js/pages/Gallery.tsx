@@ -1,5 +1,5 @@
 import { Head, router } from '@inertiajs/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useLenis } from '@/hooks/useLenis';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,8 +12,16 @@ interface GalleryImage {
     image_url: string | null;
 }
 
+interface PaginatedData<T> {
+    data: T[];
+    links: { url: string | null; label: string; active: boolean }[];
+    current_page: number;
+    last_page: number;
+    next_page_url?: string | null;
+}
+
 interface GalleryProps {
-    images: GalleryImage[];
+    images: PaginatedData<GalleryImage>;
     categories: Record<string, string>;
     selectedCategory: string;
 }
@@ -23,6 +31,46 @@ export default function Gallery({ images, categories, selectedCategory }: Galler
 
     const [activeCategory, setActiveCategory] = useState<string>(selectedCategory);
     const [selectedImage, setSelectedImage] = useState<GalleryImage | null>(null);
+    const [loadedImages, setLoadedImages] = useState(images.data);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    const scrollThumbnails = (dir: 'up' | 'down') => {
+        if (scrollContainerRef.current) {
+            const isDesktop = window.innerWidth >= 768;
+            const scrollAmountMobile = (80 + 16) * 2; // Scroll 2 items on mobile
+            const scrollAmountDesktop = (96 + 16) * 3; // Scroll 3 items on desktop
+            const amount = isDesktop ? scrollAmountDesktop : scrollAmountMobile;
+            const scrollValue = dir === 'down' ? amount : -amount;
+
+            scrollContainerRef.current.scrollBy({
+                top: scrollValue,
+                left: scrollValue,
+                behavior: 'smooth'
+            });
+        }
+    };
+
+    useEffect(() => {
+        if (images.current_page === 1) {
+            setLoadedImages(images.data);
+        } else {
+            const newImages = images.data.filter(newImg => !loadedImages.some(oldImg => oldImg.id === newImg.id));
+            setLoadedImages(prev => [...prev, ...newImages]);
+        }
+        setIsLoadingMore(false);
+    }, [images]);
+
+    const loadMore = () => {
+        if (images.next_page_url) {
+            setIsLoadingMore(true);
+            router.get(images.next_page_url, activeCategory !== 'all' ? { category: activeCategory } : {}, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }
+    };
 
     const handleCategoryChange = (cat: string) => {
         setActiveCategory(cat);
@@ -123,7 +171,7 @@ export default function Gallery({ images, categories, selectedCategory }: Galler
                         <motion.div
                             key={activeCategory}
                             initial="hidden"
-                            animate="visible"
+                            animate={selectedImage ? { opacity: 0 } : "visible"}
                             exit="hidden"
                             variants={{
                                 hidden: { opacity: 0 },
@@ -131,8 +179,8 @@ export default function Gallery({ images, categories, selectedCategory }: Galler
                             }}
                             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-[250px] md:auto-rows-[300px] grid-flow-dense gap-6"
                         >
-                            {images.length > 0 ? (
-                                images.map((item, index) => {
+                            {loadedImages.length > 0 ? (
+                                loadedImages.map((item, index) => {
                                     // Create an asymmetric, editorial bento grid pattern
                                     let spanClass = 'col-span-1 row-span-1'; // Default
 
@@ -147,6 +195,7 @@ export default function Gallery({ images, categories, selectedCategory }: Galler
                                     return (
                                         <motion.figure
                                             key={item.id}
+                                            layoutId={selectedImage ? undefined : `gallery-img-${item.id}`}
                                             variants={fadeUp}
                                             onClick={() => setSelectedImage(item)}
                                             className={`relative group cursor-pointer overflow-hidden rounded-sm bg-ocean-start/5 border border-ocean-start/10 hover:border-gold/30 hover:shadow-2xl transition-all duration-700 ${spanClass}`}
@@ -204,67 +253,129 @@ export default function Gallery({ images, categories, selectedCategory }: Galler
                                 </motion.div>
                             )}
                         </motion.div>
+                        {images.next_page_url && (
+                            <div className="mt-16 flex justify-center w-full">
+                                <button
+                                    onClick={loadMore}
+                                    disabled={isLoadingMore}
+                                    className="bg-transparent border border-ocean-start text-espresso px-8 py-3 uppercase tracking-widest text-sm font-medium hover:bg-ocean-start hover:text-white transition-all duration-300 disabled:opacity-50"
+                                >
+                                    {isLoadingMore ? 'Loading...' : 'Load More'}
+                                </button>
+                            </div>
+                        )}
                     </AnimatePresence>
                 </section>
 
-                {/* LIGHTBOX MODAL */}
+                {/* LIGHTBOX MODAL (Seamless LayoutId Transition) */}
                 {typeof document !== 'undefined' && createPortal(
                     <AnimatePresence>
                         {selectedImage && (
-                            <>
-                                {/* Backdrop */}
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="fixed inset-0 z-[60] bg-ocean-grain/90 backdrop-blur-md flex items-center justify-center p-4 md:p-8"
+                            >
+                                {/* CLOSE BUTTON (Isolated & High Contrast) */}
+                                <button
                                     onClick={() => setSelectedImage(null)}
-                                    className="fixed inset-0 bg-ocean-start/70 backdrop-blur-xs z-[60] cursor-zoom-out"
-                                />
+                                    style={{ zIndex: 100 }}
+                                    className="absolute top-6 right-6 md:top-10 md:right-10 w-12 h-12 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center transition-all shadow-xl backdrop-blur-md"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
 
-                                {/* Lightbox Content */}
-                                <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center p-4 md:p-12 pointer-events-none">
-                                    <button
-                                        onClick={() => setSelectedImage(null)}
-                                        className="absolute top-6 right-6 md:top-10 md:right-10 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors pointer-events-auto backdrop-blur-xs"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                    </button>
-
-                                    <motion.div
-                                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                        transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                                        className="relative max-w-5xl max-h-[85vh] w-full flex flex-col pointer-events-auto"
-                                    >
-                                        {selectedImage.image_url && (
-                                            <div className="relative flex-1 min-h-0 rounded-sm overflow-hidden shadow-2xl">
-                                                <img
-                                                    src={selectedImage.image_url}
-                                                    alt={selectedImage.title || 'Gallery image'}
-                                                    className="w-full h-full object-contain"
-                                                />
-                                            </div>
-                                        )}
-
-                                        {(selectedImage.title || selectedImage.description) && (
+                                <div className="w-full h-full max-w-screen-2xl mx-auto flex flex-col md:flex-row gap-8 items-center justify-center pt-16 md:pt-0 pointer-events-auto relative z-50">
+                                    {/* MAIN ACTIVE IMAGE */}
+                                    <div className="w-full md:flex-1 h-[60vh] md:h-[85vh] flex flex-col items-center justify-center relative">
+                                        <AnimatePresence mode="popLayout">
                                             <motion.div
-                                                initial={{ opacity: 0, y: 20 }}
-                                                animate={{ opacity: 1, y: 0 }}
-                                                transition={{ delay: 0.2 }}
-                                                className="mt-6 text-center"
+                                                key={selectedImage.id}
+                                                layout
+                                                layoutId={`gallery-img-${selectedImage.id}`}
+                                                transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                                                className="relative w-full h-full max-w-5xl rounded-2xl overflow-hidden shadow-2xl cursor-zoom-out flex flex-col bg-ocean-start/20"
+                                                onClick={() => setSelectedImage(null)}
                                             >
-                                                {selectedImage.title && (
-                                                    <h2 className="font-serif text-3xl md:text-4xl text-crema mb-3">{selectedImage.title}</h2>
+                                                {selectedImage.image_url ? (
+                                                    <img
+                                                        src={selectedImage.image_url}
+                                                        alt={selectedImage.title || 'Gallery image'}
+                                                        className="w-full h-full object-contain"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-black/40 flex items-center justify-center">
+                                                        <svg className="w-16 h-16 text-white/20" fill="currentColor" viewBox="0 0 24 24">
+                                                            <path d="M2,21H22V19H2M20,8H18V5H20M20,3H4V13A4,4 0 0,0 8,17H14A4,4 0 0,0 18,13V10H20A2,2 0 0,0 22,8V5C22,3.89 21.1,3 20,3M16,13A2,2 0 0,1 14,15H8A2,2 0 0,1 6,13V5H16Z" />
+                                                        </svg>
+                                                    </div>
                                                 )}
-                                                {selectedImage.description && (
-                                                    <p className="text-crema/70 font-light text-sm md:text-base max-w-2xl mx-auto">{selectedImage.description}</p>
+
+                                                {/* Image Info Overlay */}
+                                                {(selectedImage.title || selectedImage.description) && (
+                                                    <motion.div
+                                                        initial={{ opacity: 0, y: 20 }}
+                                                        animate={{ opacity: 1, y: 0 }}
+                                                        transition={{ delay: 0.3 }}
+                                                        className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-ocean-start/80 via-ocean-start/20 to-transparent p-6 md:p-10 pt-20 text-center pointer-events-none"
+                                                    >
+                                                        {selectedImage.title && <h2 className="font-serif text-3xl md:text-5xl text-crema mb-3 drop-shadow-lg">{selectedImage.title}</h2>}
+                                                        {selectedImage.description && <p className="text-crema/90 font-light text-sm md:text-base max-w-2xl mx-auto drop-shadow-md">{selectedImage.description}</p>}
+                                                    </motion.div>
                                                 )}
                                             </motion.div>
-                                        )}
-                                    </motion.div>
+                                        </AnimatePresence>
+                                    </div>
+
+                                    {/* THUMBNAILS SIDEBAR */}
+                                    <div className="flex flex-row md:flex-col items-center justify-center gap-3 shrink-0 w-full md:w-auto h-24 md:h-[85vh] md:pt-14 relative" style={{ zIndex: 90 }}>
+                                        {/* Scroll Up/Left Arrow */}
+                                        <button onClick={() => scrollThumbnails('up')} className="w-10 h-10 flex items-center justify-center text-white hover:text-gold transition-colors bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-md shrink-0 shadow-xl border border-white/10">
+                                            <svg className="w-5 h-5 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 15l7-7 7 7"></path></svg>
+                                            <svg className="w-5 h-5 md:hidden block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7"></path></svg>
+                                        </button>
+
+                                        <div
+                                            ref={scrollContainerRef}
+                                            className="flex md:flex-col gap-4 overflow-x-auto md:overflow-x-hidden md:overflow-y-auto touch-pan-y md:touch-auto w-full md:w-32 h-full max-w-[176px] md:max-w-none md:max-h-[544px] pb-4 md:pb-0 scrollbar-hide relative"
+                                        >
+                                            <AnimatePresence mode="popLayout">
+                                                {loadedImages.filter(img => img.id !== selectedImage.id).map(img => (
+                                                    <motion.div
+                                                        layout
+                                                        key={img.id}
+                                                        layoutId={`gallery-img-${img.id}`}
+                                                        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                                                        onClick={() => setSelectedImage(img)}
+                                                        className="w-20 h-20 md:w-full md:h-24 rounded-xl overflow-hidden cursor-pointer shrink-0 border-2 border-transparent hover:border-gold transition-colors relative bg-black/40 hover:bg-black/60"
+                                                    >
+                                                        {img.image_url ? (
+                                                            <img
+                                                                src={img.image_url}
+                                                                alt={img.title || 'Thumbnail'}
+                                                                className="w-full h-full object-cover opacity-70 hover:opacity-100 transition-opacity"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity">
+                                                                <svg className="w-8 h-8 text-white/40" fill="currentColor" viewBox="0 0 24 24">
+                                                                    <path d="M2,21H22V19H2M20,8H18V5H20M20,3H4V13A4,4 0 0,0 8,17H14A4,4 0 0,0 18,13V10H20A2,2 0 0,0 22,8V5C22,3.89 21.1,3 20,3M16,13A2,2 0 0,1 14,15H8A2,2 0 0,1 6,13V5H16Z" />
+                                                                </svg>
+                                                            </div>
+                                                        )}
+                                                    </motion.div>
+                                                ))}
+                                            </AnimatePresence>
+                                        </div>
+
+                                        {/* Scroll Down/Right Arrow */}
+                                        <button onClick={() => scrollThumbnails('down')} className="w-10 h-10 flex items-center justify-center text-white hover:text-gold transition-colors bg-black/40 hover:bg-black/60 rounded-full backdrop-blur-md shrink-0 shadow-xl border border-white/10">
+                                            <svg className="w-5 h-5 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                            <svg className="w-5 h-5 md:hidden block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"></path></svg>
+                                        </button>
+                                    </div>
                                 </div>
-                            </>
+                            </motion.div>
                         )}
                     </AnimatePresence>,
                     document.body

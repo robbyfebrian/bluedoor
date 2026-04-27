@@ -91,13 +91,14 @@ export default function Locations({ branches }: LocationsProps) {
                             branches.map((branch, index) => {
                                 // Dynamic span based on index
                                 let spanClass = 'md:col-span-12';
-                                const mod = index % 6;
+                                const mod = index % 7;
                                 if (mod === 0) spanClass = 'md:col-span-12';
                                 else if (mod === 1) spanClass = 'md:col-span-7';
                                 else if (mod === 2) spanClass = 'md:col-span-5';
                                 else if (mod === 3) spanClass = 'md:col-span-4';
                                 else if (mod === 4) spanClass = 'md:col-span-8';
                                 else if (mod === 5) spanClass = 'md:col-span-6';
+                                else if (mod === 6) spanClass = 'md:col-span-6';
 
                                 // Prevent empty grid space if the last item starts a new row
                                 if (index === branches.length - 1 && (mod === 1 || mod === 3 || mod === 5)) {

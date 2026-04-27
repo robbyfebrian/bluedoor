@@ -88,7 +88,7 @@ export default function BlogIndex({ posts, categories, selectedCategory }: BlogI
                         {posts.data.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {posts.data.map((post) => (
-                                    <Link key={post.id} href={`/blog/${post.slug}`} className="group flex flex-col bg-ocean-grain rounded-2xl overflow-hidden shadow-sm border border-mocha/10 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                                    <Navlink key={post.id} href={`/blog/${post.slug}`} className="group flex flex-col bg-ocean-grain rounded-2xl overflow-hidden shadow-sm border border-mocha/10 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                                         <div className="aspect-[16/10] overflow-hidden bg-ocean-start/20 relative">
                                             {post.featured_image_url ? (
                                                 <img
@@ -126,7 +126,7 @@ export default function BlogIndex({ posts, categories, selectedCategory }: BlogI
                                                 <span className="text-sm font-medium text-espresso">{post.author.name}</span>
                                             </div>
                                         </div>
-                                    </Link>
+                                    </Navlink
                                 ))}
                             </div>
                         ) : (

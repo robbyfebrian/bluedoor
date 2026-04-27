@@ -84,8 +84,6 @@ class EmployeesTable
                     DeleteBulkAction::make(),
                 ]),
             ])
-            ->reorderable('order')
-            ->defaultSort('order', 'asc')
             ->striped();
     }
 }

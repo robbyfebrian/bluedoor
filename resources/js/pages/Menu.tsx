@@ -1,5 +1,5 @@
-import { Head } from '@inertiajs/react';
-import { useState, useMemo } from 'react';
+import { Head, router } from '@inertiajs/react';
+import { useState, useEffect, useRef } from 'react';
 import { useLenis } from '@/hooks/useLenis';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -8,7 +8,7 @@ interface MenuItem {
     menu_category_id: number;
     name: string;
     description: string;
-    price: number | string; // Handle both since API might return stringified int
+    price: number | string;
     image: string | null;
     image_url: string | null;
     allergens: string[] | null;
@@ -20,41 +20,69 @@ interface MenuCategory {
     description: string | null;
 }
 
-interface MenuProps {
-    categories: MenuCategory[];
-    menuItems: MenuItem[];
+interface PaginatedData<T> {
+    data: T[];
+    links: { url: string | null; label: string; active: boolean }[];
+    current_page: number;
+    last_page: number;
+    next_page_url?: string | null;
 }
 
-export default function Menu({ categories, menuItems }: MenuProps) {
+interface MenuProps {
+    categories: MenuCategory[];
+    menuItems: PaginatedData<MenuItem>;
+    filters: { search?: string; category?: string | number };
+}
+
+export default function Menu({ categories, menuItems, filters }: MenuProps) {
     useLenis(); // Enable smooth scrolling
 
-    const [activeCategory, setActiveCategory] = useState<number | 'all'>('all');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 8;
+    const [searchQuery, setSearchQuery] = useState(filters?.search || '');
+    const [activeCategory, setActiveCategory] = useState<number | 'all'>(filters?.category as number | 'all' || 'all');
+    
+    const [loadedItems, setLoadedItems] = useState(menuItems.data);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const isMounted = useRef(false);
 
-    // Reset pagination when filter changes
-    const handleCategoryChange = (cat: number | 'all') => {
-        setActiveCategory(cat);
-        setCurrentPage(1);
+    // Debounced filter submission
+    useEffect(() => {
+        if (!isMounted.current) {
+            isMounted.current = true;
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            router.get(
+                '/menu',
+                { search: searchQuery, category: activeCategory },
+                { preserveState: true, preserveScroll: true, replace: true }
+            );
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchQuery, activeCategory]);
+
+    useEffect(() => {
+        if (menuItems.current_page === 1) {
+            setLoadedItems(menuItems.data);
+        } else {
+            const newItems = menuItems.data.filter(newItem => !loadedItems.some(oldItem => oldItem.id === newItem.id));
+            setLoadedItems(prev => [...prev, ...newItems]);
+        }
+        setIsLoadingMore(false);
+    }, [menuItems]);
+
+    const loadMore = () => {
+        if (menuItems.next_page_url) {
+            setIsLoadingMore(true);
+            router.get(menuItems.next_page_url, { search: searchQuery, category: activeCategory }, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }
     };
 
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchQuery(e.target.value);
-        setCurrentPage(1);
-    };
-
-    const filteredItems = useMemo(() => {
-        return menuItems.filter(item => {
-            const matchesCategory = activeCategory === 'all' || item.menu_category_id === activeCategory;
-            const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                  (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
-            return matchesCategory && matchesSearch;
-        });
-    }, [menuItems, activeCategory, searchQuery]);
-
-    const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-    const activeItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+    const activeItems = loadedItems;
 
     // Helper for Rupiah formatting
     const formatIDR = (price: number | string) => {
@@ -103,41 +131,50 @@ export default function Menu({ categories, menuItems }: MenuProps) {
                     </div>
                 </section>
 
-                {/* STICKY CATEGORY NAVIGATION & SEARCH */}
+                {/* FILTER SECTION */}
                 <section className="sticky top-0 z-40 bg-crema/95 backdrop-blur-md border-b border-ocean-start/10">
-                    <div className="max-w-screen-2xl mx-auto px-6 lg:px-12 flex flex-col md:flex-row md:items-center justify-between py-4 gap-4">
-                        <div className="flex gap-8 overflow-x-auto scrollbar-hide text-sm uppercase tracking-widest font-medium items-center">
-                            {categories.map((category) => {
-                                const isActive = activeCategory === category.id;
-                                return (
-                                    <button
-                                        key={category.id}
-                                        onClick={() => handleCategoryChange(category.id)}
-                                        className={`relative whitespace-nowrap px-1 pb-2 transition-colors duration-300 ${isActive ? 'text-espresso' : 'text-espresso/60/50 hover:text-espresso'}`}
-                                    >
-                                        {category.name}
-                                        {isActive && (
-                                            <motion.div
-                                                layoutId="activeCategoryUnderline"
-                                                className="absolute left-0 right-0 bottom-0 h-0.5 bg-ocean-grain"
-                                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                                            />
-                                        )}
-                                    </button>
-                                );
-                            })}
+                    <div className="max-w-screen-2xl mx-auto px-6 lg:px-12 py-4 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+
+                            {/* Category Select */}
+                            <div className="relative w-full sm:w-64">
+                                <select
+                                    value={activeCategory}
+                                    onChange={(e) => setActiveCategory(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                                    className="w-full appearance-none bg-transparent border-0 border-b border-espresso/20 text-espresso text-sm uppercase tracking-widest font-medium px-0 py-2 pr-8 focus:ring-0 focus:border-espresso focus:outline-none cursor-pointer transition-colors"
+                                >
+                                    <option value="all">All Categories</option>
+                                    {categories.map(category => (
+                                        <option key={category.id} value={category.id}>
+                                            {category.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-espresso/60">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 9l-7 7-7-7" /></svg>
+                                </div>
+                            </div>
                         </div>
-                        <div className="relative w-full md:w-64 flex-shrink-0">
+
+                        {/* Search Input */}
+                        <div className="w-full md:w-72 relative shrink-0">
                             <input
                                 type="text"
                                 placeholder="Search menu..."
                                 value={searchQuery}
-                                onChange={handleSearchChange}
-                                className="w-full bg-transparent border-b border-espresso/20 px-0 py-2 text-sm focus:outline-none focus:border-ocean-start focus:ring-0 placeholder-espresso/40 transition-colors text-espresso"
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-transparent border-0 border-b border-espresso/20 focus:border-espresso focus:outline-none focus:ring-0 px-0 py-2 text-sm placeholder:text-espresso/40 transition-colors text-espresso"
                             />
-                            <svg className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 text-espresso/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
+                            {searchQuery && (
+                                <button onClick={() => setSearchQuery('')} className="absolute right-0 top-1/2 -translate-y-1/2 text-espresso/40 hover:text-espresso text-xs uppercase tracking-widest transition-colors">
+                                    Clear
+                                </button>
+                            )}
+                            {!searchQuery && (
+                                <div className="absolute right-0 top-1/2 -translate-y-1/2 text-espresso/40 pointer-events-none">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>
@@ -236,6 +273,17 @@ export default function Menu({ categories, menuItems }: MenuProps) {
                                 </motion.div>
                             )}
                         </motion.div>
+                        {menuItems.next_page_url && (
+                            <div className="mt-16 flex justify-center w-full">
+                                <button
+                                    onClick={loadMore}
+                                    disabled={isLoadingMore}
+                                    className="bg-transparent border border-ocean-start text-espresso px-8 py-3 uppercase tracking-widest text-sm font-medium hover:bg-ocean-start hover:text-white transition-all duration-300 disabled:opacity-50"
+                                >
+                                    {isLoadingMore ? 'Loading...' : 'Load More'}
+                                </button>
+                            </div>
+                        )}
                     </AnimatePresence>
                 </section>
             </div>

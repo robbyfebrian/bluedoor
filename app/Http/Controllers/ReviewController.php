@@ -14,7 +14,7 @@ class ReviewController extends Controller
             ->with('approver')
             ->orderBy('is_featured', 'desc')
             ->orderBy('created_at', 'desc')
-            ->paginate(6);
+            ->paginate(12)->withQueryString();
 
         $averageRating = Review::averageRating();
         $totalReviews = $reviews->count();

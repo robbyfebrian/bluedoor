@@ -46,17 +46,17 @@ export default function BlogShow({ post, relatedPosts }: BlogShowProps) {
                 <article className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Header */}
                     <header className="mb-12 text-center">
-                        <Link href="/blog" className="inline-flex items-center text-sm font-semibold text-caramel hover:text-espresso transition-colors mb-8">
+                        <Navlink href="/blog" className="inline-flex items-center text-sm font-semibold text-caramel hover:text-espresso transition-colors mb-8">
                             <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                             Back to Blog
-                        </Link>
-                        
+                        </Navlink
+
                         <div className="flex items-center justify-center space-x-2 mb-6 text-sm font-bold tracking-wider uppercase text-espresso/70">
                             <span className="text-caramel">{categoryMap[post.category] || post.category}</span>
                             <span>•</span>
                             <span>{new Date(post.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
                         </div>
-                        
+
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-espresso leading-tight mb-8">
                             {post.title}
                         </h1>
@@ -89,7 +89,7 @@ export default function BlogShow({ post, relatedPosts }: BlogShowProps) {
                     )}
 
                     {/* Content */}
-                    <div 
+                    <div
                         className="prose prose-lg prose-amber max-w-none prose-headings:font-serif prose-headings:text-espresso prose-a:text-caramel prose-a:no-underline hover:prose-a:text-espresso hover:prose-a:underline prose-img:rounded-xl prose-img:shadow-md"
                         dangerouslySetInnerHTML={{ __html: post.content }}
                     />
@@ -112,7 +112,7 @@ export default function BlogShow({ post, relatedPosts }: BlogShowProps) {
                         <h2 className="text-3xl font-serif font-bold text-espresso mb-10 text-center">More from {categoryMap[post.category] || post.category}</h2>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                             {relatedPosts.map((relatedPost) => (
-                                <Link key={relatedPost.id} href={`/blog/${relatedPost.slug}`} className="group flex flex-col bg-ocean-grain rounded-2xl overflow-hidden shadow-sm border border-mocha/10 hover:shadow-xl transition-all duration-300">
+                                <Navlink key={relatedPost.id} href={`/blog/${relatedPost.slug}`} className="group flex flex-col bg-ocean-grain rounded-2xl overflow-hidden shadow-sm border border-mocha/10 hover:shadow-xl transition-all duration-300">
                                     {relatedPost.featured_image_url && (
                                         <div className="aspect-[16/10] overflow-hidden">
                                             <img
@@ -126,7 +126,7 @@ export default function BlogShow({ post, relatedPosts }: BlogShowProps) {
                                         <h3 className="text-xl font-bold text-espresso mb-3 line-clamp-2 group-hover:text-caramel transition-colors">{relatedPost.title}</h3>
                                         <p className="text-gray-600 text-sm line-clamp-2">{relatedPost.excerpt}</p>
                                     </div>
-                                </Link>
+                                </Navlink
                             ))}
                         </div>
                     </section>

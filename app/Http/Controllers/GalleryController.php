@@ -17,7 +17,7 @@ class GalleryController extends Controller
             $query->category($category);
         }
 
-        $images = $query->get();
+        $images = $query->paginate(12)->withQueryString();
 
         $categories = [
             'all' => 'All Photos',

@@ -65,9 +65,31 @@ export default function Careers({ jobs, branches, filters }: CareersProps) {
         }, 300);
         return () => clearTimeout(timer);
     }, [searchQuery, selectedBranch, selectedType]);
+    const [loadedJobs, setLoadedJobs] = useState(jobs.data);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-    const filteredJobs = jobs.data;
+    useEffect(() => {
+        if (jobs.current_page === 1) {
+            setLoadedJobs(jobs.data);
+        } else {
+            const newJobs = jobs.data.filter(newJob => !loadedJobs.some(oldJob => oldJob.id === newJob.id));
+            setLoadedJobs(prev => [...prev, ...newJobs]);
+        }
+        setIsLoadingMore(false);
+    }, [jobs]);
 
+    const loadMore = () => {
+        if (jobs.next_page_url) {
+            setIsLoadingMore(true);
+            router.get(jobs.next_page_url, { search: searchQuery, branch: selectedBranch, type: selectedType }, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }
+    };
+
+    const filteredJobs = loadedJobs;
     const [selectedJob, setSelectedJob] = useState<JobOpening | null>(null);
     const [isApplying, setIsApplying] = useState(false);
 
@@ -287,6 +309,17 @@ export default function Careers({ jobs, branches, filters }: CareersProps) {
                                         </motion.div>
                                     );
                                 })}
+                                {jobs.next_page_url && (
+                                    <div className="mt-16 col-span-1 md:col-span-3 flex justify-center w-full">
+                                        <button
+                                            onClick={loadMore}
+                                            disabled={isLoadingMore}
+                                            className="bg-transparent border border-ocean-start text-espresso px-8 py-3 uppercase tracking-widest text-sm font-medium hover:bg-ocean-start hover:text-white transition-all duration-300 disabled:opacity-50"
+                                        >
+                                            {isLoadingMore ? 'Loading...' : 'Load More'}
+                                        </button>
+                                    </div>
+                                )}
                             </motion.div>
                         ) : (
                             <motion.div

@@ -34,7 +34,7 @@ class CareersController extends Controller
             $query->where('type', $request->type);
         }
 
-        $jobs = $query->orderBy('created_at', 'desc')->paginate(6)->withQueryString();
+        $jobs = $query->orderBy('created_at', 'desc')->paginate(12)->withQueryString();
             
         $branches = Branch::active()->get(['id', 'name']);
 

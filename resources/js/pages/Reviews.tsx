@@ -1,4 +1,4 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, useForm, usePage, router } from '@inertiajs/react';
 import type { FormEventHandler } from 'react';
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
@@ -32,6 +32,29 @@ export default function Reviews({ reviews, averageRating, totalReviews }: Review
     const { flash } = usePage<SharedData>().props;
 
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [loadedReviews, setLoadedReviews] = useState(reviews.data);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+    useEffect(() => {
+        if (reviews.current_page === 1) {
+            setLoadedReviews(reviews.data);
+        } else {
+            const newReviews = reviews.data.filter(nR => !loadedReviews.some(oR => oR.id === nR.id));
+            setLoadedReviews(prev => [...prev, ...newReviews]);
+        }
+        setIsLoadingMore(false);
+    }, [reviews]);
+
+    const loadMore = () => {
+        if (reviews.next_page_url) {
+            setIsLoadingMore(true);
+            router.get(reviews.next_page_url, {}, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true,
+            });
+        }
+    };
 
     const { data, setData, post, processing, errors, reset } = useForm({
         customer_name: '',
@@ -134,19 +157,9 @@ export default function Reviews({ reviews, averageRating, totalReviews }: Review
                     </div>
                 </section>
 
-                {/* NOTIFICATIONS */}
-                <div className="max-w-screen-2xl mx-auto px-6 lg:px-12 -mt-6 relative z-30">
-                    {(flash?.success || flash?.error || flash?.info) && (
-                        <div className="mb-6 p-4 bg-[#E3F2FD] border border-[#90CAF9] text-[#1565C0] rounded-sm flex items-center justify-center gap-3">
-                            <span className="text-lg">ℹ</span>
-                            <p className="font-medium text-sm tracking-wide">{flash.success || flash.error || flash.info}</p>
-                        </div>
-                    )}
-                </div>
-
                 {/* REVIEWS MASONRY GRID */}
                 <section className="py-24 px-6 lg:px-12 max-w-screen-2xl mx-auto">
-                    {reviews.data.length === 0 ? (
+                    {loadedReviews.length === 0 ? (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -167,7 +180,7 @@ export default function Reviews({ reviews, averageRating, totalReviews }: Review
                             }}
                             className="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8"
                         >
-                            {reviews.data.map((review, index) => {
+                            {loadedReviews.map((review, index) => {
                                 const hoverBgColors = ['hover:bg-ocean-start', 'hover:bg-gold', 'hover:bg-mocha', 'hover:bg-espresso'];
                                 const textHoverColors = ['group-hover:text-crema', 'group-hover:text-espresso', 'group-hover:text-crema', 'group-hover:text-crema'];
                                 const hoverColor = hoverBgColors[index % hoverBgColors.length];
@@ -210,6 +223,18 @@ export default function Reviews({ reviews, averageRating, totalReviews }: Review
                                 );
                             })}
                         </motion.div>
+                    )}
+
+                    {reviews.next_page_url && (
+                        <div className="mt-16 flex justify-center w-full">
+                            <button
+                                onClick={loadMore}
+                                disabled={isLoadingMore}
+                                className="bg-transparent border border-ocean-start text-espresso px-8 py-3 uppercase tracking-widest text-sm font-medium hover:bg-ocean-start hover:text-white transition-all duration-300 disabled:opacity-50"
+                            >
+                                {isLoadingMore ? 'Loading...' : 'Load More'}
+                            </button>
+                        </div>
                     )}
                 </section>
 
