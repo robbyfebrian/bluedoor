@@ -16,7 +16,7 @@ enum NewsletterSubscriptionStatus: string
         return match ($this) {
             self::PendingVerification => [self::Subscribed, self::Unsubscribed],
             self::Subscribed => [self::Unsubscribed],
-            self::Unsubscribed => [self::Subscribed],
+            self::Unsubscribed => [self::PendingVerification, self::Subscribed],
         };
     }
 

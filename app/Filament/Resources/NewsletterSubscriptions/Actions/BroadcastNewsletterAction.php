@@ -8,17 +8,30 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Gate;
 
 class BroadcastNewsletterAction
 {
+    protected static function canBroadcast(): bool
+    {
+        if (! auth()->guard()->check()) {
+            return false;
+        }
+
+        $user = auth()->guard()->user();
+
+        return $user->hasRole('super_admin')
+            || Gate::forUser($user)->allows('broadcast', NewsletterSubscription::class);
+    }
+
     public static function make(): Action
     {
         return Action::make('broadcast')
             ->label('Broadcast Newsletter')
             ->icon('heroicon-o-paper-airplane')
-            ->color('success')
+            ->color('primary')
             ->form([
                 TextInput::make('subject')
                     ->required()
@@ -30,7 +43,16 @@ class BroadcastNewsletterAction
                     ->columnSpanFull(),
             ])
             ->action(function (array $data) {
-                abort_unless(auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('broadcast', NewsletterSubscription::class), 403);
+                abort_unless(static::canBroadcast(), 403);
+
+                $mailer = (string) config('mail.default');
+                if (in_array($mailer, ['log', 'array'], true)) {
+                    Notification::make()
+                        ->warning()
+                        ->title('SMTP belum aktif')
+                        ->body("Mailer saat ini `{$mailer}`. Email tidak dikirim ke inbox asli sebelum SMTP dikonfigurasi.")
+                        ->send();
+                }
 
                 $subscribers = NewsletterSubscription::subscribed()->verified()->get();
 
@@ -49,20 +71,32 @@ class BroadcastNewsletterAction
                     'content' => $data['content'],
                 ]);
 
-                $pdfPath = storage_path('app/newsletters/' . time() . '.pdf');
+                $newsletterDir = storage_path('app/newsletters');
+                File::ensureDirectoryExists($newsletterDir);
+
+                $pdfPath = $newsletterDir . '/' . time() . '.pdf';
                 $pdf->save($pdfPath);
 
                 // Send emails (in production, this should be queued)
                 $count = 0;
                 foreach ($subscribers as $subscriber) {
                     try {
+                        $fromAddress = (string) config('mail.from.address');
+                        $isResendTestingSender = str_ends_with(strtolower($fromAddress), '@resend.dev');
+
                         Mail::send('emails.newsletter', [
                             'subscriber' => $subscriber,
                             'subject' => $data['subject'],
                             'content' => $data['content'],
-                        ], function ($message) use ($subscriber, $data, $pdfPath) {
-                            $message->to($subscriber->email, $subscriber->name)
-                                ->subject($data['subject'])
+                        ], function ($message) use ($subscriber, $data, $pdfPath, $isResendTestingSender) {
+                            if ($isResendTestingSender) {
+                                // Resend testing mode expects strict plain recipient email.
+                                $message->to($subscriber->email);
+                            } else {
+                                $message->to($subscriber->email, $subscriber->name);
+                            }
+
+                            $message->subject($data['subject'])
                                 ->attach($pdfPath);
                         });
                         $count++;
@@ -80,6 +114,6 @@ class BroadcastNewsletterAction
                     ->body("Successfully sent newsletter to {$count} subscriber(s).")
                     ->send();
             })
-            ->visible(fn (): bool => auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('broadcast', NewsletterSubscription::class));
+            ->visible(fn (): bool => static::canBroadcast());
     }
 }

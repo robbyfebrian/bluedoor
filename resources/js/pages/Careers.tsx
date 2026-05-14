@@ -100,6 +100,7 @@ export default function Careers({ jobs, branches, filters }: CareersProps) {
         phone: '',
         cover_letter: '',
         cv: null as File | null,
+        newsletter_consent: false,
     });
 
     const openJobDetails = (job: JobOpening) => {
@@ -489,9 +490,21 @@ export default function Careers({ jobs, branches, filters }: CareersProps) {
                                                 </div>
 
                                                 <div className="pt-4 pb-8">
-                                                    <p className="text-xs text-espresso/60/50 text-center mb-6 leading-relaxed">
-                                                        By submitting this application, you agree to receive newsletter updates from Blue Door Coffee as part of our transparent recruitment process.
-                                                    </p>
+                                                    <label className="mb-4 flex items-start gap-3 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={data.newsletter_consent}
+                                                            onChange={(e) => setData('newsletter_consent', e.target.checked)}
+                                                            className="mt-1 h-4 w-4 accent-[#305aa0]"
+                                                            required
+                                                        />
+                                                        <span className="text-xs text-espresso/70 leading-relaxed">
+                                                            Saya setuju berlangganan newsletter Blue Door Coffee dan memahami langganan akan aktif setelah verifikasi email (double opt-in).
+                                                        </span>
+                                                    </label>
+                                                    {errors.newsletter_consent && (
+                                                        <p className="mb-4 text-xs text-red-600 text-center">{errors.newsletter_consent}</p>
+                                                    )}
                                                     <button
                                                         type="submit"
                                                         disabled={processing}

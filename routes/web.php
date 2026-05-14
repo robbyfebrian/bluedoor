@@ -26,6 +26,7 @@ Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
 // Form submission routes
 Route::get('/newsletter/unsubscribe', [NewsletterController::class, 'showUnsubscribeForm'])->name('newsletter.unsubscribe.form');
+Route::get('/newsletter/verify/{token}', [NewsletterController::class, 'verify'])->name('newsletter.verify');
 
 Route::middleware('throttle:10,1')->group(function () {
     Route::post('/careers/apply', [CareersController::class, 'apply'])->name('careers.apply');

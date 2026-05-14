@@ -26,51 +26,90 @@ class RolePermissionSeeder extends Seeder
             Role::firstOrCreate(['name' => $name], ['guard_name' => 'web']);
         }
 
-        $allPermissions = Permission::all()->pluck('name')->toArray();
+        $allPermissions = Permission::query()->pluck('name')->toArray();
+        $hasPermission = static fn (string $permission): bool => in_array($permission, $allPermissions, true);
 
         $superAdmin = Role::findByName('super_admin');
         $superAdmin->syncPermissions($allPermissions);
 
         $managerCabang = Role::findByName('manager_cabang');
         $managerCabangPermissions = [
-            'view_any_job::opening',
-            'view_job::opening',
-            'create_job::opening',
-            'update_job::opening',
-            'delete_job::opening',
-            'restore_job::opening',
+            'ViewAny:JobOpening',
+            'View:JobOpening',
+            'Create:JobOpening',
+            'Update:JobOpening',
+            'Delete:JobOpening',
 
-            'view_any_employee',
-            'view_employee',
-            'create_employee',
-            'update_employee',
-            'delete_employee',
-            'restore_employee',
+            'ViewAny:Employee',
+            'View:Employee',
+            'Create:Employee',
+            'Update:Employee',
+            'Delete:Employee',
 
-            'view_any_menu::category',
-            'view_menu::category',
-            'create_menu::category',
-            'update_menu::category',
-            'delete_menu::category',
-            'view_any_menu::item',
-            'view_menu::item',
-            'create_menu::item',
-            'update_menu::item',
-            'delete_menu::item',
+            'ViewAny:MenuCategory',
+            'View:MenuCategory',
+            'Create:MenuCategory',
+            'Update:MenuCategory',
+            'Delete:MenuCategory',
+            'ViewAny:MenuItem',
+            'View:MenuItem',
+            'Create:MenuItem',
+            'Update:MenuItem',
+            'Delete:MenuItem',
 
-            'view_any_branch',
-            'view_branch',
+            'ViewAny:Branch',
+            'View:Branch',
+
+            'ViewAny:BlogPost',
+            'View:BlogPost',
+            'Create:BlogPost',
+            'Update:BlogPost',
+            'publish_blog_post',
+
+            'ViewAny:Review',
+            'View:Review',
+            'Update:Review',
+            'approve_review',
+            'feature_review',
+
+            'ViewAny:GalleryImage',
+            'View:GalleryImage',
+            'Create:GalleryImage',
+            'Update:GalleryImage',
+            'Delete:GalleryImage',
+
+            'ViewAny:NewsletterSubscription',
+            'View:NewsletterSubscription',
+            'broadcast_newsletter',
+
+            'ViewAny:JobApplication',
+            'View:JobApplication',
+            'Update:JobApplication',
+            'review_job_application',
+            'shortlist_job_application',
+            'hire_candidate',
+            'reject_candidate',
         ];
-        $managerCabang->syncPermissions(array_values(array_intersect($managerCabangPermissions, $allPermissions)));
+        $managerCabang->syncPermissions(array_values(array_filter(
+            $managerCabangPermissions,
+            $hasPermission,
+        )));
 
         $peninjau = Role::findByName('peninjau');
         $peninjauPermissions = [
-            'view_any_job::application',
-            'view_job::application',
-            'update_job::application',
+            'ViewAny:JobApplication',
+            'View:JobApplication',
+            'Update:JobApplication',
+            'review_job_application',
+            'shortlist_job_application',
+            'hire_candidate',
+            'reject_candidate',
         ];
-        $peninjau->syncPermissions(array_values(array_intersect($peninjauPermissions, $allPermissions)));
+        $peninjau->syncPermissions(array_values(array_filter(
+            $peninjauPermissions,
+            $hasPermission,
+        )));
 
-        $this->command->info('Roles and permissions seeded successfully.');
+        $this->command?->info('Roles and permissions seeded successfully.');
     }
 }

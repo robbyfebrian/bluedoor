@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Enums\JobApplicationStatus;
-use App\Enums\NewsletterSubscriptionStatus;
 use App\Models\Branch;
 use App\Models\JobOpening;
 use App\Models\JobApplication;
-use App\Models\NewsletterSubscription;
+use App\Services\Newsletter\NewsletterSubscriptionService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -45,7 +44,7 @@ class CareersController extends Controller
         ]);
     }
 
-    public function apply(Request $request)
+    public function apply(Request $request, NewsletterSubscriptionService $newsletterSubscriptionService)
     {
         $validated = $request->validate([
             'job_opening_id' => 'required|exists:job_openings,id',
@@ -54,6 +53,7 @@ class CareersController extends Controller
             'phone' => 'required|string|max:255',
             'cover_letter' => 'nullable|string',
             'cv' => 'required|file|mimes:pdf,doc,docx|max:5120',
+            'newsletter_consent' => 'accepted',
         ]);
 
         $hasActiveApplication = JobApplication::query()
@@ -84,24 +84,16 @@ class CareersController extends Controller
             'status' => 'pending',
         ]);
 
-        $subscription = NewsletterSubscription::where('email', $validated['email'])->first();
+        $verificationRequested = $newsletterSubscriptionService->requestVerification(
+            $validated['email'],
+            $validated['name'],
+        );
 
-        if ($subscription) {
-            if ($subscription->status !== NewsletterSubscriptionStatus::Subscribed) {
-                $subscription->name = $validated['name'] ?? $subscription->name;
-                $subscription->save();
-                $subscription->transitionTo(NewsletterSubscriptionStatus::Subscribed);
-            }
-        } else {
-            NewsletterSubscription::create([
-                'email' => $validated['email'],
-                'name' => $validated['name'],
-                'status' => NewsletterSubscriptionStatus::Subscribed,
-                'is_subscribed' => true,
-                'verified_at' => now(),
-            ]);
-        }
-
-        return back()->with('success', 'Application submitted successfully!');
+        return back()->with(
+            'success',
+            $verificationRequested
+                ? 'Application submitted successfully! Please check your email to confirm newsletter subscription.'
+                : 'Application submitted successfully!',
+        );
     }
 }

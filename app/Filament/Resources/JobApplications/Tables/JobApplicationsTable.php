@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\JobApplications\Tables;
 
 use App\Enums\JobApplicationStatus;
+use App\Services\Recruitment\HireCandidateService;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
@@ -119,7 +120,7 @@ class JobApplicationsTable
                     ->icon('heroicon-o-hand-thumb-up')
                     ->color('success')
                     ->visible(fn ($record): bool => auth()->guard()->check() && Gate::forUser(auth()->guard()->user())->allows('hire', $record))
-                    ->action(fn ($record) => $record->transitionTo(JobApplicationStatus::Hired, auth()->guard()->id()))
+                    ->action(fn ($record) => app(HireCandidateService::class)->hire($record, (int) auth()->guard()->id()))
                     ->requiresConfirmation(),
 
                 Action::make('reject')

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\NewsletterSubscriptionStatus;
+use Illuminate\Support\Str;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
@@ -25,6 +26,8 @@ class NewsletterSubscription extends Model
         'name',
         'status',
         'is_subscribed',
+        'verification_token',
+        'verification_sent_at',
         'verified_at',
         'unsubscribed_at',
     ];
@@ -32,6 +35,7 @@ class NewsletterSubscription extends Model
     protected $casts = [
         'status' => NewsletterSubscriptionStatus::class,
         'is_subscribed' => 'boolean',
+        'verification_sent_at' => 'datetime',
         'verified_at' => 'datetime',
         'unsubscribed_at' => 'datetime',
     ];
@@ -82,9 +86,29 @@ class NewsletterSubscription extends Model
         $this->transitionTo(NewsletterSubscriptionStatus::Unsubscribed);
     }
 
+    public function startVerification(): void
+    {
+        if ($this->status === NewsletterSubscriptionStatus::Unsubscribed) {
+            $this->transitionTo(NewsletterSubscriptionStatus::PendingVerification);
+        }
+
+        $this->update([
+            'status' => NewsletterSubscriptionStatus::PendingVerification,
+            'is_subscribed' => false,
+            'verification_token' => Str::random(64),
+            'verification_sent_at' => now(),
+            'verified_at' => null,
+            'unsubscribed_at' => null,
+        ]);
+    }
+
     public function verify(): void
     {
         $this->transitionTo(NewsletterSubscriptionStatus::Subscribed);
+        $this->update([
+            'verification_token' => null,
+            'verification_sent_at' => null,
+        ]);
     }
 
     public function getActivitylogOptions(): LogOptions

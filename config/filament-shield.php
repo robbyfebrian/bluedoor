@@ -237,6 +237,8 @@ return [
         'feature_review' => 'Feature Review',
 
         // Recruitment workflow permissions
+        'review_job_application' => 'Review Job Application',
+        'shortlist_job_application' => 'Shortlist Job Application',
         'hire_candidate' => 'Hire Candidate',
         'reject_candidate' => 'Reject Candidate',
 

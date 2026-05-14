@@ -13,18 +13,18 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([
-            RolePermissionSeeder::class,
-            UserSeeder::class,
-            CoffeeShopSeeder::class,
-        ]);
-
-        // Regenerate Filament Shield permissions after seeders run (non-interactive).
+        // Generate policies + permissions first so role mapping can stay consistent.
         Artisan::call('shield:generate', [
             '--all' => true,
             '--panel' => 'admin',
             '--option' => 'policies_and_permissions',
             '--no-interaction' => true,
+        ]);
+
+        $this->call([
+            RolePermissionSeeder::class,
+            UserSeeder::class,
+            CoffeeShopSeeder::class,
         ]);
 
         $this->command?->info(Artisan::output());

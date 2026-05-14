@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\NewsletterSubscriptionStatus;
 use App\Models\NewsletterSubscription;
+use App\Services\Newsletter\NewsletterSubscriptionService;
 use Illuminate\Http\Request;
 
 class NewsletterController extends Controller
@@ -15,34 +16,43 @@ class NewsletterController extends Controller
         ]);
     }
 
-    public function subscribe(Request $request)
+    public function subscribe(Request $request, NewsletterSubscriptionService $newsletterSubscriptionService)
     {
         $validated = $request->validate([
             'email' => 'required|email|max:255',
             'name' => 'nullable|string|max:255',
         ]);
 
-        $subscription = NewsletterSubscription::where('email', $validated['email'])->first();
+        $verificationRequested = $newsletterSubscriptionService->requestVerification(
+            $validated['email'],
+            $validated['name'] ?? null,
+        );
 
-        if ($subscription) {
-            if ($subscription->status === NewsletterSubscriptionStatus::Subscribed) {
-                return back()->with('info', 'You are already subscribed to our newsletter!');
-            }
-
-            $subscription->name = $validated['name'] ?? $subscription->name;
-            $subscription->save();
-            $subscription->transitionTo(NewsletterSubscriptionStatus::Subscribed);
-        } else {
-            NewsletterSubscription::create([
-                'email' => $validated['email'],
-                'name' => $validated['name'] ?? null,
-                'status' => NewsletterSubscriptionStatus::Subscribed,
-                'is_subscribed' => true,
-                'verified_at' => now(),
-            ]);
+        if (! $verificationRequested) {
+            return back()->with('info', 'You are already subscribed to our newsletter!');
         }
 
-        return back()->with('success', 'Successfully subscribed to our newsletter!');
+        return back()->with('success', 'Please check your email and confirm your subscription.');
+    }
+
+    public function verify(string $token)
+    {
+        $subscription = NewsletterSubscription::where('verification_token', $token)->first();
+
+        if (! $subscription) {
+            return redirect()->route('home')
+                ->with('error', 'Invalid or expired verification token.');
+        }
+
+        if ($subscription->status === NewsletterSubscriptionStatus::Subscribed) {
+            return redirect()->route('home')
+                ->with('info', 'Your subscription is already active.');
+        }
+
+        $subscription->verify();
+
+        return redirect()->route('home')
+            ->with('success', 'Newsletter subscription verified successfully!');
     }
 
     public function unsubscribe(Request $request)
