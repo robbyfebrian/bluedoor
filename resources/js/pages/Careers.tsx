@@ -118,12 +118,25 @@ export default function Careers({ jobs, branches, filters }: CareersProps) {
         setIsApplying(true);
     };
 
+    const MAX_CV_SIZE_MB = 4;
+    const MAX_CV_SIZE_BYTES = MAX_CV_SIZE_MB * 1024 * 1024;
+    const [cvError, setCvError] = useState<string | null>(null);
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+        setCvError(null);
+
+        if (data.cv && data.cv.size > MAX_CV_SIZE_BYTES) {
+            setCvError(`File CV terlalu besar (${(data.cv.size / 1024 / 1024).toFixed(1)}MB). Maksimal ${MAX_CV_SIZE_MB}MB.`);
+            return;
+        }
+
         post('/careers/apply', {
             preserveScroll: true,
+            forceFormData: true,
             onSuccess: () => {
                 reset();
+                setCvError(null);
                 closeDetails();
             },
         });
@@ -147,8 +160,8 @@ export default function Careers({ jobs, branches, filters }: CareersProps) {
             // @ts-ignore
             window.lenis?.start();
         }
-        return () => { 
-            document.body.style.overflow = 'unset'; 
+        return () => {
+            document.body.style.overflow = 'unset';
             document.documentElement.style.overflow = 'unset';
             // @ts-ignore
             window.lenis?.start();
@@ -472,12 +485,20 @@ export default function Careers({ jobs, branches, filters }: CareersProps) {
                                                 </div>
 
                                                 <div>
-                                                    <p className="text-sm text-espresso/60/60 mb-2">CV / Resume * (PDF, DOCX)</p>
-                                                    <div className="border border-dashed border-ocean-start/10/30 p-6 rounded-sm text-center hover:bg-white/50 transition-colors relative">
+                                                    <p className="text-sm text-espresso/60/60 mb-2">CV / Resume * (PDF, DOCX — maks. {MAX_CV_SIZE_MB}MB)</p>
+                                                    <div className={`border border-dashed ${cvError ? 'border-red-400' : 'border-ocean-start/10/30'} p-6 rounded-sm text-center hover:bg-white/50 transition-colors relative`}>
                                                         <input
                                                             type="file"
                                                             id="cv"
-                                                            onChange={(e) => setData('cv', e.target.files?.[0] || null)}
+                                                            onChange={(e) => {
+                                                                const file = e.target.files?.[0] || null;
+                                                                setData('cv', file);
+                                                                if (file && file.size > MAX_CV_SIZE_BYTES) {
+                                                                    setCvError(`File terlalu besar (${(file.size / 1024 / 1024).toFixed(1)}MB). Maksimal ${MAX_CV_SIZE_MB}MB.`);
+                                                                } else {
+                                                                    setCvError(null);
+                                                                }
+                                                            }}
                                                             accept=".pdf,.doc,.docx"
                                                             required
                                                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
@@ -486,7 +507,7 @@ export default function Careers({ jobs, branches, filters }: CareersProps) {
                                                             {data.cv ? data.cv.name : "Upload File"}
                                                         </span>
                                                     </div>
-                                                    {errors.cv && <p className="mt-2 text-xs text-red-600">{errors.cv}</p>}
+                                                    {(cvError || errors.cv) && <p className="mt-2 text-xs text-red-600">{cvError || errors.cv}</p>}
                                                 </div>
 
                                                 <div className="pt-4 pb-8">

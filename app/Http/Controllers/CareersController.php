@@ -8,6 +8,7 @@ use App\Models\JobOpening;
 use App\Models\JobApplication;
 use App\Services\Newsletter\NewsletterSubscriptionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -52,7 +53,7 @@ class CareersController extends Controller
             'email' => 'required|email|max:255',
             'phone' => 'required|string|max:255',
             'cover_letter' => 'nullable|string',
-            'cv' => 'required|file|mimes:pdf,doc,docx|max:5120',
+            'cv' => 'required|file|mimes:pdf,doc,docx|max:4096',
             'newsletter_consent' => 'accepted',
         ]);
 
@@ -72,22 +73,40 @@ class CareersController extends Controller
             ])->withInput();
         }
 
-        $cvPath = $request->file('cv')->store('cvs', env('FILESYSTEM_DISK', 'local'));
+        try {
+            $cvPath = $request->file('cv')->store('cvs', config('filesystems.default'));
 
-        JobApplication::create([
-            'job_opening_id' => $validated['job_opening_id'],
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
-            'cover_letter' => $validated['cover_letter'] ?? null,
-            'cv_path' => $cvPath,
-            'status' => 'pending',
-        ]);
+            if (!$cvPath) {
+                return back()->with('error', 'Failed to upload CV. Please try again.')->withInput();
+            }
 
-        $verificationRequested = $newsletterSubscriptionService->requestVerification(
-            $validated['email'],
-            $validated['name'],
-        );
+            JobApplication::create([
+                'job_opening_id' => $validated['job_opening_id'],
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'],
+                'cover_letter' => $validated['cover_letter'] ?? null,
+                'cv_path' => $cvPath,
+                'status' => 'pending',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('CV Upload Error: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return back()->with('error', 'Failed to process your application. Please try again or use a smaller file.')->withInput();
+        }
+
+        try {
+            $verificationRequested = $newsletterSubscriptionService->requestVerification(
+                $validated['email'],
+                $validated['name'],
+            );
+        } catch (\Exception $e) {
+            Log::error('Newsletter verification error: ' . $e->getMessage());
+            $verificationRequested = false;
+        }
 
         return back()->with(
             'success',
