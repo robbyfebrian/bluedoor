@@ -34,7 +34,7 @@ class CareersController extends Controller
         }
 
         $jobs = $query->orderBy('created_at', 'desc')->paginate(12)->withQueryString();
-            
+
         $branches = Branch::active()->get(['id', 'name']);
 
         return Inertia::render('Careers', [
@@ -72,7 +72,7 @@ class CareersController extends Controller
             ])->withInput();
         }
 
-        $cvPath = $request->file('cv')->store('cvs', 'public');
+        $cvPath = $request->file('cv')->store('cvs', env('FILESYSTEM_DISK', 'local'));
 
         JobApplication::create([
             'job_opening_id' => $validated['job_opening_id'],

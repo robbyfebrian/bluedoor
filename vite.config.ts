@@ -17,10 +17,10 @@ export default defineConfig({
             },
         }),
         tailwindcss(),
-        wayfinder({
+        !process.env.VERCEL && wayfinder({
             formVariants: true,
         }),
-    ],
+    ].filter(Boolean),
     esbuild: {
         jsx: 'automatic',
     },
